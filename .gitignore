@@ -1,0 +1,8 @@
+.idea
+/cmake*/
+CMakeLists.txt
+.vs
+/Debug/
+*.atsln
+*.xml
+*cppproj
