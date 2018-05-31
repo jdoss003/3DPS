@@ -4,12 +4,13 @@
  * Created: 5/19/2018 4:05:01 PM
  *  Author: Justin
  */
+
 #include "defs.h"
 
 unsigned char xDDRA = 0;
-unsigned char xDDRB = 0;
+unsigned char xDDRB = 0x03; // TODO
 unsigned char xDDRC = 0;
-unsigned char xDDRD = 0;
+unsigned char xDDRD = 0xFF; // TODO
 
 unsigned char xPINA = 0;
 unsigned char xPINB = 0;
@@ -93,6 +94,14 @@ void INITPIN(_io_pin pin, _io_mode mode, _io_hl _default)
         default:
             break;
     }
+}
+
+void INITADC(_io_pin pin)
+{
+	if (pin >= PA_0 && pin <= PA_7)
+	{
+		ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE) | (pin - PA_0);
+	}
 }
 
 void SETPIN(_io_pin pin, _io_hl out)
@@ -218,4 +227,15 @@ unsigned char GETPIN(_io_pin pin, unsigned char invert)
         default:
             return 0;
     }
+}
+
+unsigned short GETADC()
+{
+    unsigned short xADC = ADC;
+    return xADC;
+}
+
+unsigned short GETMAXADC()
+{
+    return 1023;
 }

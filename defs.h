@@ -5,7 +5,6 @@
  *  Author: Justin
  */ 
 
-
 #ifndef DEFS_H_
 #define DEFS_H_
 
@@ -17,6 +16,13 @@
 
 #include "pin_io.h"
 #include "task.h"
+
+#include "extruder.h"
+
+#define T_SENSOR PA_0
+#define TEMP_R1 4700
+
+#define EXTRUDER_PIN PB_3
 
 #define X_MOTOR_P1 PD_7
 #define X_MOTOR_P2 PC_0
@@ -51,5 +57,11 @@ typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
 #define X_HOME_OFFSET 200;
 #define Y_HOME_OFFSET 200;
 #define Z_HOME_OFFSET 200;
+
+inline void keepAlive()
+{
+    volatile unsigned char keep;
+    keep = !keep;
+}
 
 #endif /* DEFS_H_ */

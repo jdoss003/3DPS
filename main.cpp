@@ -4,7 +4,13 @@
  * Created: 5/10/2018 7:01:04 PM
  * Author : Justin
  */
+
+#include <stdlib.h>
+#include "io.c"
 #include "defs.h"
+
+_task LCD_task, wait_task;
+unsigned char waitTemp = 0;
 
 // Internal variables for mapping AVR's ISR to our cleaner TimerISR model.
 unsigned long _avr_timer_M = 1;         // Start count from here, down to 0. Default 1 ms.
@@ -65,19 +71,68 @@ void TimerSet(unsigned long M)
     _avr_timer_cntcurr = _avr_timer_M;
 }
 
+void WaitTick(_task *task)
+{
+    if (!waitTemp && ((Extruder::getTemp() - 150 < 2) || (150 - Extruder::getTemp() < 2)))
+    {
+        waitTemp = 1;
+    }
+    else if ((Extruder::getTemp() - 150 < 2) || (150 - Extruder::getTemp() < 2))
+    {
+        task->state = 1;
+    }
+}
+
+void LCDTick(_task *task)
+{
+    char string[] = "Temp:       ";
+    dtostrf(Extruder::getTemp(), 6, 2, (&string[0] + 6));
+
+    LCD_ClearScreen();
+    LCD_DisplayString(1, (unsigned char *) &string[0]);
+}
+
+void TempTest()
+{
+    LCD_init();
+    LCD_task.state = -1;
+    LCD_task.period = 1000 / TICK_PERIOD; // 1 second
+    LCD_task.elapsedTime = 0;
+    LCD_task.TickFct = &LCDTick;
+
+    addTask(&LCD_task);
+
+    wait_task.state = 0;
+    wait_task.period = 1000 / TICK_PERIOD * 60 * 3; // 1 sec * 60 * 3 = 3 min
+    wait_task.elapsedTime = 0;
+    wait_task.TickFct = &WaitTick;
+
+    addTask(&wait_task);
+
+    Extruder::setTemp(150);
+
+    while (!wait_task.state) { keepAlive(); }
+
+    Extruder::setTemp(0);
+}
+
 int main(void)
 {
+    DDRB = 0x03;
+    DDRD = 0xFF;
     unsigned char i;
     for (i = 0; i < 4; ++i)
     {
-        getMovController((_axis) i)->init((_axis) i);
+        //getMovController((_axis) i)->init((_axis) i);
     }
+
+    Extruder::init();
 
     INITPIN(PB_0, OUTPUT, LOW); // TODO remove
 
     TimerSet(TICK_PERIOD);
     TimerOn();
 
-    goHomeAll();
+    TempTest();
+    while (1) {}
 }
-

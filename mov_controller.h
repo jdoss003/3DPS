@@ -7,8 +7,6 @@
 #ifndef MOV_CONTROLLER_H_
 #define MOV_CONTROLLER_H_
 
-typedef enum contrl_state { MOTOR_WAITING, MOTOR_MOVING, MOTOR_GOING_HOME, MOTOR_AT_HOME } _contrl_state;
-
 class MovController
 {
     public:
@@ -20,7 +18,6 @@ class MovController
         unsigned char hitEndstop();
         void onTick(_task *);
 
-
     private:
         _axis axis;
         _task task;
@@ -31,6 +28,9 @@ class MovController
 
 MovController *getMovController(_axis);
 
+void goHomeX();
+void goHomeY();
+void goHomeZ();
 void goHomeAll();
 
 #endif /* MOV_CONTROLLER_H_ */

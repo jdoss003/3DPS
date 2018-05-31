@@ -6,6 +6,8 @@
  */
 #include "defs.h"
 
+enum contrl_state { MOTOR_WAITING, MOTOR_MOVING, MOTOR_GOING_HOME, MOTOR_AT_HOME, JERK_DELAY };
+
 static MovController x_motor, y_motor, z_motor, extruder;
 static MovController *motors[4] = {&x_motor, &y_motor, &z_motor, &extruder};
 
@@ -65,20 +67,6 @@ void onTickE(_task *task)
 MovController *getMovController(_axis axis)
 {
     return motors[axis];
-}
-
-void goHomeAll()
-{
-    SETPIN(PB_0, HIGH); // TODO remove
-    getMovController(X_AXIS)->goHome();
-    while (getMovController(X_AXIS)->isMoving()) { SETPIN(PB_0, LOW); }
-
-    getMovController(Y_AXIS)->goHome();
-    while (getMovController(Y_AXIS)->isMoving()) { SETPIN(PB_0, LOW); }
-
-    getMovController(Z_AXIS)->goHome();
-    while (getMovController(Z_AXIS)->isMoving()) { SETPIN(PB_0, LOW); }
-    SETPIN(PB_0, HIGH);
 }
 
 void MovController::init(_axis axis)
@@ -211,4 +199,29 @@ void MovController::onTick(_task *task)
         default:
             break;
     }
+}
+
+void goHomeX()
+{
+    getMovController(X_AXIS)->goHome();
+    while (getMovController(X_AXIS)->isMoving()) { keepAlive(); }
+}
+
+void goHomeY()
+{
+    getMovController(Y_AXIS)->goHome();
+    while (getMovController(Y_AXIS)->isMoving()) { keepAlive(); }
+}
+
+void goHomeZ()
+{
+    getMovController(Z_AXIS)->goHome();
+    while (getMovController(Z_AXIS)->isMoving()) { keepAlive(); }
+}
+
+void goHomeAll()
+{
+    goHomeX();
+    goHomeY();
+    goHomeZ();
 }
