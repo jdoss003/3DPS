@@ -5,8 +5,6 @@
  * Author : Justin
  */
 
-#include <stdlib.h>
-#include "io.c"
 #include "defs.h"
 
 _task LCD_task, wait_task;
@@ -77,7 +75,7 @@ void WaitTick(_task *task)
     {
         waitTemp = 1;
     }
-    else if ((Extruder::getTemp() - 150 < 2) || (150 - Extruder::getTemp() < 2))
+    else if ((Extruder::getTemp() - 150 < 4) || (150 - Extruder::getTemp() < 4))
     {
         task->state = 1;
     }
@@ -85,8 +83,10 @@ void WaitTick(_task *task)
 
 void LCDTick(_task *task)
 {
-    char string[] = "Temp:       ";
-    dtostrf(Extruder::getTemp(), 6, 2, (&string[0] + 6));
+    float curTemp = Extruder::getTemp();
+    char string[] = "Temp:        ";
+    dtostrf(curTemp, 6, 2, (&string[0] + 6));
+	string[12] = 'C';
 
     LCD_ClearScreen();
     LCD_DisplayString(1, (unsigned char *) &string[0]);
@@ -114,6 +114,9 @@ void TempTest()
     while (!wait_task.state) { keepAlive(); }
 
     Extruder::setTemp(0);
+	char done[] = "Done";
+	LCD_ClearScreen();
+	LCD_DisplayString(1, (unsigned char *) &done[0]);
 }
 
 int main(void)
@@ -127,8 +130,6 @@ int main(void)
     }
 
     Extruder::init();
-
-    INITPIN(PB_0, OUTPUT, LOW); // TODO remove
 
     TimerSet(TICK_PERIOD);
     TimerOn();

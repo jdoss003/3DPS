@@ -16,6 +16,6 @@ namespace Extruder
     void checkTemp();
     void onTickHeater(_task *);
     void onTickSensor(_task *);
-}
+};
 
 #endif /* EXTRUDER_H_ */

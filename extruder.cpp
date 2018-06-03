@@ -7,10 +7,12 @@
 
 #include "defs.h"
 
-const float ROOM_TEMP = 28.0;
+#define E_CUTOFF 990
+
+const float ROOM_TEMP = 30.0;
 const unsigned char MAX_HL = 100;
-const unsigned char PREHEAT_THRESHOLD = 5;
-const unsigned char ACCEPT_RANGE = 2;
+const unsigned char PREHEAT_THRESHOLD = 20;
+const unsigned char ACCEPT_RANGE = 5;
 
 enum PID_state { PID_OFF, PREHEAT, STABLE, COOL, HEAT };
 enum PWM_state { PWM_LOW, PWM_HIGH };
@@ -22,11 +24,39 @@ static float curTemp = 0.0;
 static unsigned char H = 100;
 static unsigned char L = 0;
 
-static unsigned char prevH = 0;
-static unsigned char prevL = 0;
-
 static unsigned char i;
 static _task heakerTask, tempTask;
+
+/*
+ * Look up table for ATC Semitec 104GT-2 100K thermistor
+ * pull up R: 4.7K
+ * beta: 4267K
+ * max adc: 1023
+ * https://www.reprap.org/wiki/Thermistor#ATC_Semitec_104GT-2
+ */
+#define NUMTEMPS 20
+short temptable[NUMTEMPS][2] = {
+        {1,    713},
+        {54,   236},
+        {107,  195},
+        {160,  172},
+        {213,  157},
+        {266,  144},
+        {319,  134},
+        {372,  125},
+        {425,  117},
+        {478,  110},
+        {531,  103},
+        {584,  96},
+        {637,  89},
+        {690,  83},
+        {743,  75},
+        {796,  68},
+        {849,  59},
+        {902,  48},
+        {955,  34},
+        {1008, 3}
+};
 
 // 0.954 hz is lowest frequency possible with this function,
 // based on settings in PWM_on()
@@ -83,7 +113,7 @@ void Extruder::init()
     INITPIN(PB_3, OUTPUT, LOW);
 
     heakerTask.state = PWM_LOW;
-    heakerTask.period = 2;
+    heakerTask.period = 100 / TICK_PERIOD;
     heakerTask.elapsedTime = 0;
     heakerTask.TickFct = &Extruder::onTickHeater;
 
@@ -111,12 +141,25 @@ void Extruder::checkTemp()
     prevTemp = curTemp;
 
     unsigned short xADC = GETADC();
-    unsigned short xADCMAX = GETMAXADC();
 
-    // do math
+    if (xADC < E_CUTOFF)
+    {
+        unsigned char i;
+        for (i = 1; i < NUMTEMPS; ++i)
+        {
+            if (temptable[i][0] > xADC)
+            {
+                float base_temp = temptable[i][1];
+                float t_diff = temptable[i - 1][1] - base_temp;
+                float range = temptable[i][0] - temptable[i - 1][0];
+                curTemp = base_temp + (t_diff / range * (temptable[i][0] - xADC));
+                return;
+            }
+        }
+    }
 
-    // set new curTemp;
-
+    setTemp(0);
+    // TODO fail
 }
 
 void Extruder::onTickHeater(_task *task)
@@ -149,13 +192,13 @@ void Extruder::onTickSensor(_task *task)
 {
     Extruder::checkTemp();
 
+    static unsigned char i;
+
     if (task->state != PID_OFF && desiredTemp <= ROOM_TEMP)
     {
         task->state = PID_OFF;
         L = MAX_HL;
         H = 0;
-        prevL = 0;
-        prevH = 0;
     }
 
     switch (task->state)
@@ -164,48 +207,99 @@ void Extruder::onTickSensor(_task *task)
             if (desiredTemp > ROOM_TEMP)
             {
                 task->state = PREHEAT;
+                H = MAX_HL;
+                L = 0;
             }
             break;
         case PREHEAT:
-            if (desiredTemp - curTemp > PREHEAT_THRESHOLD)
+            if (desiredTemp - curTemp < PREHEAT_THRESHOLD)
+            {
+                H = 0;
+                L = MAX_HL;
+            }
+            if (desiredTemp - curTemp < ACCEPT_RANGE)
+            {
+                task->state = STABLE;
+                H = MAX_HL / 5;
+                L = MAX_HL - H;
+            }
+            if (prevTemp > curTemp)
             {
                 task->state = HEAT;
-                H = MAX_HL;
-                L = 0;
+                H = MAX_HL / 4;
+                L = MAX_HL - H;
             }
             break;
         case STABLE:
             if (desiredTemp - curTemp > ACCEPT_RANGE)
             {
                 task->state = HEAT;
-                prevH = H + 1;
-                prevL = L - 1;
-                H = MAX_HL;
-                L = 0;
+                if (L > 0)
+                {
+                    ++H;
+                    --L;
+                }
+                i = 0;
             }
             else if (curTemp - desiredTemp > ACCEPT_RANGE)
             {
                 task->state = COOL;
-                prevH = H - 1;
-                prevL = L + 1;
-                H = 0;
-                L = MAX_HL;
+                if (H > 0)
+                {
+                    --H;
+                    ++L;
+                }
+                i = 0;
+            }
+            if (prevTemp > curTemp && desiredTemp - 1.0 > curTemp && L > 0)
+            {
+                ++H;
+                --L;
+            }
+            else if (prevTemp < curTemp && curTemp > desiredTemp + 1.0 && H > 0)
+            {
+                --H;
+                ++L;
             }
             break;
         case COOL:
             if (curTemp - desiredTemp <= ACCEPT_RANGE)
             {
                 task->state = STABLE;
-                H = prevH;
-                L = prevL;
+                if (L > 0)
+                {
+                    ++H;
+                    --L;
+                }
+            }
+            else if (prevTemp < curTemp && ++i > 200)
+            {
+                if (H > 0)
+                {
+                    --H;
+                    ++L;
+                }
+                i = 0;
             }
             break;
         case HEAT:
             if (desiredTemp - curTemp <= ACCEPT_RANGE)
             {
                 task->state = STABLE;
-                H = prevH;
-                L = prevL;
+                if (H > 0)
+                {
+                    --H;
+                    ++L;
+                }
+            }
+            else if (prevTemp > curTemp && ++i > 200)
+            {
+                if (L > 0)
+                {
+                    ++H;
+                    --L;
+                }
+                i = 0;
             }
             break;
         default:
