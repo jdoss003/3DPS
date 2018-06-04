@@ -7,6 +7,7 @@
 #ifndef DEFS_H_
 #define DEFS_H_
 
+#include <stdlib.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "lcd_io.h"
@@ -14,13 +15,18 @@
 // in milliseconds
 #define TICK_PERIOD 5
 
+void systemFailure(char*);
+void keepAlive();
+
 #include "pin_io.h"
 #include "task.h"
+
+#define START_BTN PB_2
+#define READY_LIGHT PB_4
 
 #include "extruder.h"
 
 #define T_SENSOR PA_0
-#define TEMP_R1 4700
 
 #define EXTRUDER_PIN PB_3
 
@@ -49,19 +55,16 @@ typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
 #include "stepper.h"
 #include "mov_controller.h"
 
-#define X_STEPS_MM 20;
-#define Y_STEPS_MM 20;
-#define Z_STEPS_MM 20;
-#define E_STEPS_MM 20;
+#define X_STEPS_MM 100;
+#define Y_STEPS_MM 100;
+#define Z_STEPS_MM 400;
+#define E_STEPS_MM 100;
 
-#define X_HOME_OFFSET 200;
-#define Y_HOME_OFFSET 200;
-#define Z_HOME_OFFSET 200;
+#define X_HOME_OFFSET 20;
+#define Y_HOME_OFFSET 5;
+#define Z_HOME_OFFSET 0;
 
-inline void keepAlive()
-{
-    volatile unsigned char keep;
-    keep = !keep;
-}
+#include "commands.h"
+#include "gcode.h"
 
 #endif /* DEFS_H_ */

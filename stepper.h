@@ -13,7 +13,7 @@ class Stepper
 {
     public:
         void init(_axis axis);
-        void step(bool reverse = false);
+        void step(unsigned char reverse = false);
 
     private:
         void setOutput();

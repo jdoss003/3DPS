@@ -11,10 +11,12 @@ class MovController
 {
     public:
         void init(_axis axis);
-        void moveTo(float);
+        void moveTo(signed short, unsigned short);
+        void setPosition(float);
         float getPosition();
         unsigned char isMoving();
         void goHome();
+        void stop();
         unsigned char hitEndstop();
         void onTick(_task *);
 
@@ -26,11 +28,14 @@ class MovController
         unsigned char hasEndstop;
 };
 
+signed short getStepsPerMM(_axis);
 MovController *getMovController(_axis);
 
 void goHomeX();
 void goHomeY();
 void goHomeZ();
 void goHomeAll();
+void stopAllMoves();
+unsigned char areAnyMotorsMoving();
 
 #endif /* MOV_CONTROLLER_H_ */

@@ -6,7 +6,7 @@
  */
 #include "defs.h"
 
-enum contrl_state { MOTOR_WAITING, MOTOR_MOVING, MOTOR_GOING_HOME, MOTOR_AT_HOME, JERK_DELAY };
+enum contrl_state { MOTOR_WAITING, MOTOR_MOVING, MOTOR_GOING_HOME, MOTOR_AT_HOME };
 
 static MovController x_motor, y_motor, z_motor, extruder;
 static MovController *motors[4] = {&x_motor, &y_motor, &z_motor, &extruder};
@@ -79,7 +79,7 @@ void MovController::init(_axis axis)
 
     this->task.state = MOTOR_WAITING;
     this->task.elapsedTime = 0;
-    this->task.period = 1;                    // TODO
+    this->task.period = 1;
 
     switch (this->axis)
     {
@@ -101,10 +101,17 @@ void MovController::init(_axis axis)
     addTask(&this->task);
 }
 
-void MovController::moveTo(float pos)
+void MovController::moveTo(signed short steps, unsigned short period)
 {
     this->task.state = MOTOR_MOVING;
-    this->steps = (signed short) ((pos - this->pos) * getStepsPerMM(this->axis));
+    this->steps = steps;
+    this->task.period = period;
+    this->task.elapsedTime = period; // start next task tick
+}
+
+void MovController::setPosition(float pos)
+{
+    this->pos = pos;
 }
 
 float MovController::getPosition()
@@ -123,7 +130,12 @@ void MovController::goHome()
     {
         this->task.state = MOTOR_GOING_HOME;
     }
-    // TODO retract filament?
+}
+
+void MovController::stop()
+{
+    this->steps = 0;
+    this->task.state = MOTOR_WAITING;
 }
 
 unsigned char MovController::hitEndstop()
@@ -148,8 +160,7 @@ void MovController::onTick(_task *task)
     switch (this->task.state)
     {
         case MOTOR_MOVING:
-            this->pos += (this->steps < 0 ? -1.0 / (float) getStepsPerMM(this->axis) : 1.0 / (float) getStepsPerMM(
-                    this->axis));
+            this->pos += (this->steps < 0 ? -1.0 / (float) getStepsPerMM(this->axis) : 1.0 / (float) getStepsPerMM(this->axis));
             this->steps += (this->steps < 0 ? 1 : -1);
             if (this->steps == 0)
             {
@@ -167,7 +178,9 @@ void MovController::onTick(_task *task)
             break;
         case MOTOR_AT_HOME:
             if (wait_ticks > 0)
-            { --wait_ticks; }
+            {
+                --wait_ticks;
+            }
             else if (!this->hitEndstop())
             {
                 this->task.state = MOTOR_MOVING;
@@ -192,7 +205,7 @@ void MovController::onTick(_task *task)
         case MOTOR_AT_HOME:
             if (wait_ticks == 0)
             {
-                getStepper(this->axis)->step(0);
+                getStepper(this->axis)->step();
             }
             break;
         case MOTOR_WAITING:
@@ -224,4 +237,25 @@ void goHomeAll()
     goHomeX();
     goHomeY();
     goHomeZ();
+}
+
+void stopAllMoves()
+{
+    unsigned char i;
+    for (i = 0; i < 4; ++i)
+    {
+        getMovController((_axis) i)->stop();
+    }
+}
+
+unsigned char areAnyMotorsMoving()
+{
+    unsigned char ret = 0;
+    unsigned char i;
+    for (i = 0; i < 4; ++i)
+    {
+        ret |= getMovController((_axis) i)->isMoving();
+    }
+
+    return ret;
 }

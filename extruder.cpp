@@ -11,21 +11,21 @@
 
 const float ROOM_TEMP = 30.0;
 const unsigned char MAX_HL = 100;
-const unsigned char PREHEAT_THRESHOLD = 20;
+const unsigned char PREHEAT_THRESHOLD = 30;
 const unsigned char ACCEPT_RANGE = 5;
 
 enum PID_state { PID_OFF, PREHEAT, STABLE, COOL, HEAT };
 enum PWM_state { PWM_LOW, PWM_HIGH };
 
-static unsigned char desiredTemp = 0;
-static float prevTemp = 0.0;
-static float curTemp = 0.0;
+unsigned short desiredTemp = 0;
+float prevTemp = 0.0;
+float curTemp = 0.0;
 
-static unsigned char H = 100;
-static unsigned char L = 0;
+unsigned char H = 0;
+unsigned char L = 100;
 
-static unsigned char i;
-static _task heakerTask, tempTask;
+unsigned char i = 0;
+_task heakerTask, tempTask;
 
 /*
  * Look up table for ATC Semitec 104GT-2 100K thermistor
@@ -138,28 +138,36 @@ float Extruder::getTemp()
 
 void Extruder::checkTemp()
 {
-    prevTemp = curTemp;
+	static unsigned char count;
 
     unsigned short xADC = GETADC();
 
-    if (xADC < E_CUTOFF)
+    if (xADC >= E_CUTOFF)
     {
-        unsigned char i;
-        for (i = 1; i < NUMTEMPS; ++i)
+		if (++count > 3) // catch glitches
         {
-            if (temptable[i][0] > xADC)
-            {
-                float base_temp = temptable[i][1];
-                float t_diff = temptable[i - 1][1] - base_temp;
-                float range = temptable[i][0] - temptable[i - 1][0];
-                curTemp = base_temp + (t_diff / range * (temptable[i][0] - xADC));
-                return;
-            }
-        }
+			setTemp(0);
+			systemFailure("Temp Sensor");
+		}
+		return;
     }
-
-    setTemp(0);
-    // TODO fail
+	count = 0;
+	unsigned char i;
+	for (i = 1; i < NUMTEMPS; ++i)
+	{
+		if (temptable[i][0] > xADC)
+		{
+			short base_temp = temptable[i][1];
+			short t_diff = temptable[i - 1][1] - base_temp;
+			short range = temptable[i][0] - temptable[i - 1][0];
+			curTemp = (float)base_temp + ((float)t_diff / (float)range * (float)(temptable[i][0] - xADC));
+		}
+	}
+	
+	if (tempTask.state == PID_OFF)
+	{
+		prevTemp = curTemp;
+	}
 }
 
 void Extruder::onTickHeater(_task *task)
@@ -190,8 +198,6 @@ void Extruder::onTickHeater(_task *task)
 
 void Extruder::onTickSensor(_task *task)
 {
-    Extruder::checkTemp();
-
     static unsigned char i;
 
     if (task->state != PID_OFF && desiredTemp <= ROOM_TEMP)
@@ -207,12 +213,12 @@ void Extruder::onTickSensor(_task *task)
             if (desiredTemp > ROOM_TEMP)
             {
                 task->state = PREHEAT;
-                H = MAX_HL;
-                L = 0;
+                H = MAX_HL / 2;
+                L = MAX_HL - H;
             }
             break;
         case PREHEAT:
-            if (desiredTemp - curTemp < PREHEAT_THRESHOLD)
+            if (desiredTemp - curTemp < 10 * (curTemp - prevTemp))
             {
                 H = 0;
                 L = MAX_HL;
@@ -220,13 +226,13 @@ void Extruder::onTickSensor(_task *task)
             if (desiredTemp - curTemp < ACCEPT_RANGE)
             {
                 task->state = STABLE;
-                H = MAX_HL / 5;
+                H = MAX_HL / 7;
                 L = MAX_HL - H;
             }
             if (prevTemp > curTemp)
             {
                 task->state = HEAT;
-                H = MAX_HL / 4;
+                H = MAX_HL / 7;
                 L = MAX_HL - H;
             }
             break;
@@ -241,7 +247,7 @@ void Extruder::onTickSensor(_task *task)
                 }
                 i = 0;
             }
-            else if (curTemp - desiredTemp > ACCEPT_RANGE)
+            else if (curTemp - desiredTemp > ACCEPT_RANGE || (2 * curTemp - prevTemp > desiredTemp + ACCEPT_RANGE))
             {
                 task->state = COOL;
                 if (H > 0)
@@ -249,6 +255,7 @@ void Extruder::onTickSensor(_task *task)
                     --H;
                     ++L;
                 }
+				H = 0;
                 i = 0;
             }
             if (prevTemp > curTemp && desiredTemp - 1.0 > curTemp && L > 0)
@@ -263,20 +270,16 @@ void Extruder::onTickSensor(_task *task)
             }
             break;
         case COOL:
+			H = 0;
             if (curTemp - desiredTemp <= ACCEPT_RANGE)
             {
                 task->state = STABLE;
-                if (L > 0)
-                {
-                    ++H;
-                    --L;
-                }
+                H = MAX_HL - L;
             }
-            else if (prevTemp < curTemp && ++i > 200)
+            else if (prevTemp < curTemp && ++i > 10)
             {
-                if (H > 0)
+                if (L < MAX_HL)
                 {
-                    --H;
                     ++L;
                 }
                 i = 0;
@@ -306,4 +309,6 @@ void Extruder::onTickSensor(_task *task)
             task->state = PID_OFF;
             break;
     }
+	
+	prevTemp = curTemp;
 }

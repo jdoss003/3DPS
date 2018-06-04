@@ -100,7 +100,8 @@ void INITADC(_io_pin pin)
 {
 	if (pin >= PA_0 && pin <= PA_7)
 	{
-		ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE) | (pin - PA_0);
+        ADMUX = (pin - PA_0);
+        ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
 	}
 }
 

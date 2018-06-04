@@ -7,8 +7,11 @@
 
 #include "defs.h"
 
-_task LCD_task, wait_task;
-unsigned char waitTemp = 0;
+#include "TEST_CUBE_GCODE"
+char *TEST_GCODE = TEST_CUBE_GCODE;
+char *error_msg = "";
+
+enum system_states { SYS_START, SYS_WAITING, SYS_RUNNING, SYS_FALURE } system_state;
 
 // Internal variables for mapping AVR's ISR to our cleaner TimerISR model.
 unsigned long _avr_timer_M = 1;         // Start count from here, down to 0. Default 1 ms.
@@ -69,16 +72,19 @@ void TimerSet(unsigned long M)
     _avr_timer_cntcurr = _avr_timer_M;
 }
 
-void WaitTick(_task *task)
+void keepAlive()
 {
-    if (!waitTemp && ((Extruder::getTemp() - 150 < 2) || (150 - Extruder::getTemp() < 2)))
-    {
-        waitTemp = 1;
-    }
-    else if ((Extruder::getTemp() - 150 < 4) || (150 - Extruder::getTemp() < 4))
-    {
-        task->state = 1;
-    }
+	Extruder::checkTemp();
+}
+
+void systemFailure(char *msg)
+{
+    Extruder::setTemp(0.0);
+    system_state = SYS_FALURE;
+    stopAllMoves();
+    error_msg = msg;
+
+    while (1) { keepAlive(); } // stay here until reset
 }
 
 void LCDTick(_task *task)
@@ -90,50 +96,68 @@ void LCDTick(_task *task)
 
     LCD_ClearScreen();
     LCD_DisplayString(1, (unsigned char *) &string[0]);
+
+    char *status;
+
+    switch (system_state)
+    {
+        case SYS_START:
+            status = "Initializing...";
+            break;
+        case SYS_WAITING:
+            status = "Ready";
+            break;
+        case SYS_RUNNING:
+            status = "Printing...";
+            break;
+        case SYS_FALURE:
+            status = error_msg;
+            break;
+    }
+
+    LCD_DisplayString(17, (const unsigned char*)status);
 }
 
-void TempTest()
+void mainLoop()
 {
-    LCD_init();
-    LCD_task.state = -1;
-    LCD_task.period = 1000 / TICK_PERIOD; // 1 second
-    LCD_task.elapsedTime = 0;
-    LCD_task.TickFct = &LCDTick;
+    SETPIN(READY_LIGHT, HIGH);
+    system_state = SYS_WAITING;
 
-    addTask(&LCD_task);
+    while (!GETPIN(START_BTN, 1)) { keepAlive(); }
+    SETPIN(READY_LIGHT, LOW);
 
-    wait_task.state = 0;
-    wait_task.period = 1000 / TICK_PERIOD * 60 * 3; // 1 sec * 60 * 3 = 3 min
-    wait_task.elapsedTime = 0;
-    wait_task.TickFct = &WaitTick;
-
-    addTask(&wait_task);
-
-    Extruder::setTemp(150);
-
-    while (!wait_task.state) { keepAlive(); }
-
-    Extruder::setTemp(0);
-	char done[] = "Done";
-	LCD_ClearScreen();
-	LCD_DisplayString(1, (unsigned char *) &done[0]);
+    system_state = SYS_RUNNING;
+    GCode::executeFString((char*)TEST_GCODE);
 }
 
-int main(void)
+int main()
 {
     DDRB = 0x03;
     DDRD = 0xFF;
-    unsigned char i;
-    for (i = 0; i < 4; ++i)
-    {
-        //getMovController((_axis) i)->init((_axis) i);
-    }
 
-    Extruder::init();
+    system_state = SYS_START;
 
-    TimerSet(TICK_PERIOD);
-    TimerOn();
+     _task LCD_task;
+     LCD_init();
+     LCD_task.state = -1;
+     LCD_task.period = 1000 / TICK_PERIOD; // 1 second
+     LCD_task.elapsedTime = 0;
+     LCD_task.TickFct = &LCDTick;
 
-    TempTest();
-    while (1) {}
+     addTask(&LCD_task);
+
+     initMovScheduler();
+
+     unsigned char i;
+     for (i = 0; i < 4; ++i)
+     {
+         getMovController((_axis) i)->init((_axis) i);
+     }
+
+     Extruder::init();
+
+     TimerSet(TICK_PERIOD);
+     TimerOn();
+
+    while (1) { mainLoop(); }
 }

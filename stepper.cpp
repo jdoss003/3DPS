@@ -54,7 +54,7 @@ void Stepper::init(_axis axis)
     setOutput();
 }
 
-void Stepper::step(bool reverse)
+void Stepper::step(unsigned char reverse)
 {
     if (this->reversed == reverse)
     {
