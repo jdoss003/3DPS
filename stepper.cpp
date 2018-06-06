@@ -10,9 +10,9 @@ const _io_hl output1[] = { LOW, HIGH, HIGH, LOW };
 const _io_hl output2[] = { HIGH, HIGH, LOW, LOW };
 
 Stepper x_stepper, y_stepper, z_stepper, extruder_stepper;
-Stepper *steppers[4] = { &x_stepper, &y_stepper, &z_stepper, &extruder_stepper };
+Stepper* steppers[4] = { &x_stepper, &y_stepper, &z_stepper, &extruder_stepper };
 
-Stepper *getStepper(_axis axis)
+Stepper* Stepper::getStepper(_axis axis)
 {
     return steppers[axis];
 }
@@ -48,6 +48,7 @@ void Stepper::init(_axis axis)
             INITPIN(E_MOTOR_P2, OUTPUT, LOW);
             break;
         default:
+			systemFailure("Init Stepper");
             break;
     }
 
@@ -90,6 +91,7 @@ void Stepper::setOutput()
             SETPIN(E_MOTOR_P2, output2[this->index]);
             break;
         default:
+			systemFailure("Stepper Out");
             break;
     }
 }

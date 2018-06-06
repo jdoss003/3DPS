@@ -83,7 +83,7 @@ void GCode::executeFString(char *cmds)
         // Send command into command buffer
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
-			//LCD_DisplayString(17, (const unsigned char*)buf);
+			LCD_DisplayString(17, (const unsigned char*)buf);
             proccess_command(code); // ADDED
         }
     }

@@ -17,6 +17,7 @@
 
 void systemFailure(char*);
 void keepAlive();
+unsigned char getSysState();
 
 #include "pin_io.h"
 #include "task.h"
@@ -55,14 +56,18 @@ typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
 #include "stepper.h"
 #include "mov_controller.h"
 
-#define X_STEPS_MM 100;
-#define Y_STEPS_MM 100;
-#define Z_STEPS_MM 400;
-#define E_STEPS_MM 100;
+#define X_STEPS_MM 5;
+#define Y_STEPS_MM 5;
+#define Z_STEPS_MM 10;
+#define E_STEPS_MM 20;
 
-#define X_HOME_OFFSET 20;
-#define Y_HOME_OFFSET 5;
-#define Z_HOME_OFFSET 0;
+#define X_HOME_OFFSET 200;
+#define Y_HOME_OFFSET 20;
+#define Z_HOME_OFFSET -50;
+
+#define X_MAX_POS 220;
+#define Y_MAX_POS 220;
+#define Z_MAX_POS 400;
 
 #include "commands.h"
 #include "gcode.h"

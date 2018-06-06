@@ -20,6 +20,13 @@ class MovController
         unsigned char hitEndstop();
         void onTick(_task *);
 
+        static signed short getStepsPerMM(_axis);
+        static MovController *getMovController(_axis);
+
+        static void goHomeAll();
+        static void stopAllMoves();
+        static unsigned char areAnyMotorsMoving();
+
     private:
         _axis axis;
         _task task;
@@ -27,15 +34,5 @@ class MovController
         signed short steps;
         unsigned char hasEndstop;
 };
-
-signed short getStepsPerMM(_axis);
-MovController *getMovController(_axis);
-
-void goHomeX();
-void goHomeY();
-void goHomeZ();
-void goHomeAll();
-void stopAllMoves();
-unsigned char areAnyMotorsMoving();
 
 #endif /* MOV_CONTROLLER_H_ */

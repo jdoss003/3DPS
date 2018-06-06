@@ -8,9 +8,9 @@
 #include "defs.h"
 
 unsigned char xDDRA = 0;
-unsigned char xDDRB = 0x03; // TODO
+unsigned char xDDRB = 0;
 unsigned char xDDRC = 0;
-unsigned char xDDRD = 0xFF; // TODO
+unsigned char xDDRD = 0;
 
 unsigned char xPINA = 0;
 unsigned char xPINB = 0;
@@ -92,6 +92,7 @@ void INITPIN(_io_pin pin, _io_mode mode, _io_hl _default)
             PORTD = xPORTD;
             break;
         default:
+			systemFailure("Init pin");
             break;
     }
 }
@@ -167,6 +168,7 @@ void SETPIN(_io_pin pin, _io_hl out)
             PORTD = xPORTD;
             break;
         default:
+			systemFailure("Set pin");
             break;
     }
 }
@@ -226,6 +228,7 @@ unsigned char GETPIN(_io_pin pin, unsigned char invert)
             ret = mask & (invert ? ~PIND : PIND);
             return ret >> (pin - PD_0);
         default:
+			systemFailure("Get pin");
             return 0;
     }
 }

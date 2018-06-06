@@ -77,14 +77,9 @@ void keepAlive()
 	Extruder::checkTemp();
 }
 
-void systemFailure(char *msg)
+unsigned char getSysState()
 {
-    Extruder::setTemp(0.0);
-    system_state = SYS_FALURE;
-    stopAllMoves();
-    error_msg = msg;
-
-    while (1) { keepAlive(); } // stay here until reset
+	return system_state;
 }
 
 void LCDTick(_task *task)
@@ -94,7 +89,7 @@ void LCDTick(_task *task)
     dtostrf(curTemp, 6, 2, (&string[0] + 6));
 	string[12] = 'C';
 
-    LCD_ClearScreen();
+    //LCD_ClearScreen();
     LCD_DisplayString(1, (unsigned char *) &string[0]);
 
     char *status;
@@ -115,7 +110,20 @@ void LCDTick(_task *task)
             break;
     }
 
-    LCD_DisplayString(17, (const unsigned char*)status);
+	if (system_state == SYS_FALURE)
+		LCD_DisplayString(17, (const unsigned char*)status);
+}
+
+void systemFailure(char *msg)
+{
+	Extruder::setTemp(0.0);
+	SETPIN(EXTRUDER_PIN, LOW);
+	system_state = SYS_FALURE;
+	MovController::stopAllMoves();
+	error_msg = msg;
+	LCDTick(0);
+
+	while (1) { keepAlive(); } // stay here until reset
 }
 
 void mainLoop()
@@ -132,16 +140,26 @@ void mainLoop()
 
 int main()
 {
-    DDRB = 0x03;
-    DDRD = 0xFF;
-
     system_state = SYS_START;
+
+	INITPIN(START_BTN, OUTPUT, HIGH);
+    INITPIN(PB_0, OUTPUT, LOW);
+    INITPIN(PB_1, OUTPUT, LOW);
+
+    INITPIN(PD_0, OUTPUT, LOW);
+    INITPIN(PD_1, OUTPUT, LOW);
+    INITPIN(PD_2, OUTPUT, LOW);
+    INITPIN(PD_3, OUTPUT, LOW);
+    INITPIN(PD_4, OUTPUT, LOW);
+    INITPIN(PD_5, OUTPUT, LOW);
+    INITPIN(PD_6, OUTPUT, LOW);
+    INITPIN(PD_7, OUTPUT, LOW);
 
      _task LCD_task;
      LCD_init();
      LCD_task.state = -1;
      LCD_task.period = 1000 / TICK_PERIOD; // 1 second
-     LCD_task.elapsedTime = 0;
+     LCD_task.elapsedTime = LCD_task.period;
      LCD_task.TickFct = &LCDTick;
 
      addTask(&LCD_task);
@@ -151,7 +169,7 @@ int main()
      unsigned char i;
      for (i = 0; i < 4; ++i)
      {
-         getMovController((_axis) i)->init((_axis) i);
+         MovController::getMovController((_axis) i)->init((_axis) i);
      }
 
      Extruder::init();

@@ -15,6 +15,8 @@ class Stepper
         void init(_axis axis);
         void step(unsigned char reverse = false);
 
+        static Stepper* getStepper(_axis);
+
     private:
         void setOutput();
 
@@ -22,7 +24,5 @@ class Stepper
         unsigned char index;
         unsigned char reversed;
 };
-
-Stepper *getStepper(_axis);
 
 #endif /* STEPPER_H_ */

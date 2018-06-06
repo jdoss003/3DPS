@@ -14,12 +14,13 @@ extern void addTask(_task *task)
     }
     else
     {
-        // TODO error
+        systemFailure("Task init");
     }
 }
 
 extern void tickTasks()
 {
+	if (getSysState() == 3) return;
     unsigned char i;
     for (i = 0; i < numTasks; i++)
     {
