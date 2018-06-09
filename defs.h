@@ -1,8 +1,11 @@
 /*
- * defs.h
+ * File: defs.h
+ * Author : Justin Doss
  *
- * Created: 5/19/2018 4:04:01 PM
- *  Author: Justin
+ * This file contains all the definitions (configs) for the project.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
 #ifndef DEFS_H_
 #define DEFS_H_

@@ -1,11 +1,12 @@
 /*
  * pin_io.h
+ * Author : Justin Doss
  *
- * Created: 5/19/2018 4:05:20 PM
- *  Author: Justin
+ * This file allows for easy control of all input and output signals from the microcontroller.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
-
-
 #ifndef PIN_IO_H_
 #define PIN_IO_H_
 

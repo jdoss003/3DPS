@@ -1,11 +1,12 @@
 /*
  * stepper.h
+ * Author : Justin Doss
  *
- * Created: 5/19/2018 4:01:26 PM
- *  Author: Justin
+ * This file implements an abstraction layer to allow simple control of forward and reverse motor stepping.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
-
-
 #ifndef STEPPER_H_
 #define STEPPER_H_
 

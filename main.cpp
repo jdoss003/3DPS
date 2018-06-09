@@ -1,8 +1,11 @@
 /*
- * FinalProjct.c
+ * main.c
+ * Author : Justin Doss
  *
- * Created: 5/10/2018 7:01:04 PM
- * Author : Justin
+ * This file contains the main loop and initialization code for the program.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
 
 #include "defs.h"

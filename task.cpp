@@ -1,12 +1,18 @@
-//
-// Created by Justin Doss on 5/25/18.
-//
+/*
+ * task.cpp
+ * Author : Justin Doss
+ *
+ * This file is responsible for running each task element on each SM tick.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
+ */
 #include "defs.h"
 
 static unsigned char numTasks = 0;
 static _task *tasks[MAX_TASKS];
 
-extern void addTask(_task *task)
+void addTask(_task *task)
 {
     if (numTasks < MAX_TASKS)
     {
@@ -18,9 +24,9 @@ extern void addTask(_task *task)
     }
 }
 
-extern void tickTasks()
+void tickTasks()
 {
-	if (getSysState() == 3) return;
+    if (getSysState() == 3) { return; }
     unsigned char i;
     for (i = 0; i < numTasks; i++)
     {

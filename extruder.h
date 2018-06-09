@@ -1,10 +1,13 @@
 /*
  * extruder.h
+ * Author : Justin Doss
  *
- * Created: 5/27/2018 3:34:01 PM
- *  Author: Justin
+ * This file implements the functionality of the temperature sensor and the dynamic
+ * PWM for the extruder.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
-
 #ifndef EXTRUDER_H_
 #define EXTRUDER_H_
 

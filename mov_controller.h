@@ -1,8 +1,11 @@
 /*
  * mov_controller.h
+ * Author : Justin Doss
  *
- * Created: 5/21/2018 3:05:07 PM
- *  Author: Justin
+ * This file implements the control of each motor and its movement.
+ *
+ * I acknowledge all content contained herein, excluding template or example code,
+ * is my own work.
  */
 #ifndef MOV_CONTROLLER_H_
 #define MOV_CONTROLLER_H_
