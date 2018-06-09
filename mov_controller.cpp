@@ -187,11 +187,6 @@ void MovController::onTick(_task *task)
 			{
 				this->task.state = MOTOR_WAITING;
 			}
-			else
-			{
-				this->pos += (this->steps < 0 ? -1.0 / (float) getStepsPerMM(this->axis) : 1.0 / (float) getStepsPerMM(this->axis));
-				this->steps += (this->steps < 0 ? 1 : -1);
-			}
             break;
         case MOTOR_GOING_HOME:
             this->task.period = 1;
@@ -227,6 +222,8 @@ void MovController::onTick(_task *task)
 			if (this->hasEndstop && ((this->steps < 0 && this->hitEndstop()) || (this->steps > 0 && this->pos > getMaxPos(this->axis))))
 				systemFailure("Invalid pos");
             Stepper::getStepper(this->axis)->step(this->steps < 0);
+            this->pos += (this->steps < 0 ? -1.0 / (float) getStepsPerMM(this->axis) : 1.0 / (float) getStepsPerMM(this->axis));
+            this->steps += (this->steps < 0 ? 1 : -1);
             break;
         case MOTOR_GOING_HOME:
             Stepper::getStepper(this->axis)->step(1);

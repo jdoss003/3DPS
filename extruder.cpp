@@ -194,8 +194,10 @@ void Extruder::onTickSensor(_task *task)
                 H = MAX_HL / 3;
                 L = MAX_HL - H;
             }
-			else
-				i = 0;
+			if (prevTemp <= curTemp)
+            {
+                i = 0;
+            }
             break;
         case STABLE:
             if (desiredTemp - curTemp > ACCEPT_RANGE)
