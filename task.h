@@ -7,6 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef TASK_H_
 #define TASK_H_
 
@@ -27,7 +28,6 @@ struct task
 };
 
 void addTask(_task *task);
-
 void tickTasks();
 
 #endif /* TASK_H_ */

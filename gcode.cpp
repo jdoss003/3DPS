@@ -2,11 +2,12 @@
  *  I claim no ownership of the following code. It is used in this project for the sole purpose of
  *  parsing a gcode command for text. The following code is a HEAVILY trimmed down version of
  *  the gcode parsing and transfer protocol for the Repetier 3D Printer Firmware. The original code
- *  in its entirity can be found at the web page listed below and it licensed under
+ *  in its entirety can be found at the web page listed below and it licensed under
  *  GNU General Public License version 3 or later.
  *
  *  https://github.com/repetier/Repetier-Firmware/blob/master/src/ArduinoAVR/Repetier/gcode.cpp
  */
+
 #include "defs.h" // ADDED
 
 uint32_t GCode::actLineNumber; ///< Line number of current command.
@@ -76,14 +77,14 @@ void GCode::executeFString(char *cmds)
         }
         while(buflen < 79);
         if(buflen == 0) {  // empty line ignore
-			if(!c) return; // Special case \n0
+            if(!c) return; // Special case \n0
             continue;
-		}
+        }
         buf[buflen] = 0;
         // Send command into command buffer
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
-			LCD_DisplayString(17, (const unsigned char*)buf);
+            //LCD_DisplayString(17, (const unsigned char*)buf);
             proccess_command(code); // ADDED
         }
     }
@@ -100,7 +101,7 @@ bool GCode::parseAscii(char *line,bool fromSerial)
     params = 0;
     params2 = 0;
     internalCommand = !fromSerial;
-	bool hasChecksum = false;
+    bool hasChecksum = false;
     char c;
     while ( (c = *(pos++)) )
     {
@@ -248,58 +249,58 @@ bool GCode::parseAscii(char *line,bool fromSerial)
         case 'C':
         case 'c':
         {
-	        C = parseFloatValue(pos);
-	        params2 |= 16;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            C = parseFloatValue(pos);
+            params2 |= 16;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'H':
         case 'h':
         {
-	        H = parseFloatValue(pos);
-	        params2 |= 32;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            H = parseFloatValue(pos);
+            params2 |= 32;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'A':
         case 'a':
         {
-	        A = parseFloatValue(pos);
-	        params2 |= 64;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            A = parseFloatValue(pos);
+            params2 |= 64;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'B':
         case 'b':
         {
-	        B = parseFloatValue(pos);
-	        params2 |= 128;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            B = parseFloatValue(pos);
+            params2 |= 128;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'K':
         case 'k':
         {
-	        K = parseFloatValue(pos);
-	        params2 |= 256;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            K = parseFloatValue(pos);
+            params2 |= 256;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'L':
         case 'l':
         {
-	        L = parseFloatValue(pos);
-	        params2 |= 512;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            L = parseFloatValue(pos);
+            params2 |= 512;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case 'O':
         case 'o':
         {
-	        O = parseFloatValue(pos);
-	        params2 |= 1024;
-	        params |= 4096; // Needs V2 for saving
-	        break;
+            O = parseFloatValue(pos);
+            params2 |= 1024;
+            params |= 4096; // Needs V2 for saving
+            break;
         }
         case '*' : //checksum
         {

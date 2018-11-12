@@ -8,6 +8,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef EXTRUDER_H_
 #define EXTRUDER_H_
 
@@ -16,6 +17,7 @@ namespace Extruder
     void  init();
     void  setTemp(unsigned char);
     float getTemp();
+    unsigned short getDesiredTemp();
     void checkTemp();
     void onTickHeater(_task *);
     void onTickSensor(_task *);

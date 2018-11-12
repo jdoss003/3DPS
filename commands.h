@@ -7,6 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef COMMANDS_H
 #define COMMANDS_H
 

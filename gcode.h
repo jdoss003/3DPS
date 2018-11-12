@@ -2,7 +2,7 @@
  *  I claim no ownership of the following code. It is used in this project for the sole purpose of
  *  parsing a gcode command for text. The following code is a HEAVILY trimmed down version of
  *  the gcode parsing and transfer protocol for the Repetier 3D Printer Firmware. The original code
- *  in its entirity can be found at the web page listed below and it licensed under
+ *  in its entirety can be found at the web page listed below and it licensed under
  *  GNU General Public License version 3 or later.
  *
  *  https://github.com/repetier/Repetier-Firmware/blob/master/src/ArduinoAVR/Repetier/gcode.h
@@ -64,23 +64,23 @@ public:
     {
         return ((params & 8)!=0);
     }
-	inline void unsetX() {
-		params &= ~8;
-	}
+    inline void unsetX() {
+        params &= ~8;
+    }
     inline bool hasY()
     {
         return ((params & 16)!=0);
     }
-	inline void unsetY() {
-		params &= ~16;
-	}
+    inline void unsetY() {
+        params &= ~16;
+    }
     inline bool hasZ()
     {
         return ((params & 32)!=0);
     }
-	inline void unsetZ() {
-		params &= ~32;
-	}
+    inline void unsetZ() {
+        params &= ~32;
+    }
     inline bool hasNoXYZ()
     {
         return ((params & 56)==0);

@@ -7,6 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef PIN_IO_H_
 #define PIN_IO_H_
 
@@ -20,14 +21,14 @@ typedef enum io_pin
     PD_0, PD_1, PD_2, PD_3, PD_4, PD_5, PD_6, PD_7, NONE
 } _io_pin;
 
-void INITPIN(_io_pin pin, _io_mode mode, _io_hl _default);
-void INITADC(_io_pin pin);
+void INITPIN(_io_pin pin, _io_mode mode, char _default);
+void INITADC();
 
-void SETPIN(_io_pin pin, _io_hl out);
+void SETPIN(_io_pin pin, char out);
 
-unsigned char GETPIN(_io_pin pin, unsigned char invert);
+unsigned char GETPIN(_io_pin pin, char invert);
 
-unsigned short GETADC();
+unsigned short GETADC(_io_pin pin);
 unsigned short GETMAXADC();
 
 #endif /* PIN_IO_H_ */

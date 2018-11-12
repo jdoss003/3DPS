@@ -7,6 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef STEPPER_H_
 #define STEPPER_H_
 
@@ -19,8 +20,6 @@ class Stepper
         static Stepper* getStepper(_axis);
 
     private:
-        void setOutput();
-
         _axis axis;
         unsigned char index;
         unsigned char reversed;

@@ -7,26 +7,54 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef DEFS_H_
 #define DEFS_H_
+
+#define F_CPU 8000000UL
 
 #include <stdlib.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "lcd_io.h"
+#include <util/delay.h>
+#include "string.h"
+#include "ff.h"
 
-// in milliseconds
-#define TICK_PERIOD 5
-
+void waitingLoop();
+void updateDisplay();
 void systemFailure(char*);
-void keepAlive();
 unsigned char getSysState();
 
 #include "pin_io.h"
+#include "lcd.h"
 #include "task.h"
 
-#define START_BTN PB_2
-#define READY_LIGHT PB_4
+// in milliseconds
+#define TICK_PERIOD_A 1
+#define TICK_PERIOD_B 2000
+#define TIMER_A_ISR tickTasks
+#define TIMER_B_ISR updateDisplay
+
+#include "timer.h"
+
+#define LCD_ENABLE PD_2
+#define LCD_RS PD_3
+#define LCD_DATA0 PD_4
+#define LCD_DATA1 PD_5
+#define LCD_DATA2 PD_6
+#define LCD_DATA3 PD_7
+#define LCD_BTTNS PA_1
+
+#define LCD_ENTER_LOW 430
+#define LCD_ENTER_HIGH 530
+#define LCD_BACK_LOW 50
+#define LCD_BACK_HIGH 140
+#define LCD_UP_LOW 590
+#define LCD_UP_HIGH 690
+#define LCD_DOWN_LOW 145
+#define LCD_DOWN_HIGH 225
+#define LCD_MENU_LOW 260
+#define LCD_MENU_HIGH 360
 
 #include "extruder.h"
 
@@ -34,20 +62,20 @@ unsigned char getSysState();
 
 #define EXTRUDER_PIN PB_3
 
-#define X_MOTOR_P1 PC_0
-#define X_MOTOR_P2 PC_1
+#define X_MOTOR_DIR PC_0
+#define X_MOTOR_STEP PC_1
 #define X_MOTOR_INVERT 1
 
-#define Y_MOTOR_P1 PC_2
-#define Y_MOTOR_P2 PC_3
+#define Y_MOTOR_DIR PC_2
+#define Y_MOTOR_STEP PC_3
 #define Y_MOTOR_INVERT 1
 
-#define Z_MOTOR_P1 PC_5
-#define Z_MOTOR_P2 PC_4
+#define Z_MOTOR_DIR PC_5
+#define Z_MOTOR_STEP PC_4
 #define Z_MOTOR_INVERT 0
 
-#define E_MOTOR_P1 PC_7
-#define E_MOTOR_P2 PC_6
+#define E_MOTOR_DIR PC_7
+#define E_MOTOR_STEP PC_6
 #define E_MOTOR_INVERT 0
 
 #define X_ENDSTOP PA_3

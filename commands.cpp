@@ -62,7 +62,7 @@ void do_g_command(GCode cmd)
     {
         case 0: // move command
         case 1:
-            while (mov_scheduler.state == SCHED_READY || MovController::areAnyMotorsMoving()) { keepAlive(); }
+            while (mov_scheduler.state == SCHED_READY || MovController::areAnyMotorsMoving()) { waitingLoop(); }
 
             mov.x_steps = 0;
             mov.y_steps = 0;
@@ -153,7 +153,7 @@ void do_g_command(GCode cmd)
 
 void do_m_command(GCode cmd)
 {
-	static unsigned char i;
+    static unsigned char i;
     switch (cmd.M)
     {
         case 84: // stop idle hold
@@ -175,8 +175,8 @@ void do_m_command(GCode cmd)
             if (!cmd.hasS() || cmd.S > 250)
                 invalidCommandFailure();
             Extruder::setTemp(cmd.S);
-			i = 0;
-            while (Extruder::getTemp() + 5.0 < cmd.S || ++i < 200) { keepAlive(); }
+            i = 0;
+            while (Extruder::getTemp() + 5.0 < cmd.S || ++i < 200) { waitingLoop(); }
             break;
 
         case 140: // set heat bed temp (not use here but caught to avoid unknown cmd failure)
@@ -193,7 +193,7 @@ void proccess_command(GCode cmd)
 {
     if (cmd.hasFormatError())
         invalidCommandFailure();
-	Extruder::checkTemp();
+    Extruder::checkTemp();
 
     if (cmd.hasG())
         do_g_command(cmd);

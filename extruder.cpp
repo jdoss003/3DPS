@@ -8,9 +8,10 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #include "defs.h"
 
-#define E_CUTOFF 990
+#define E_CUTOFF 1020
 
 const float ROOM_TEMP = 30.0;
 const unsigned char MAX_HL = 100;
@@ -63,16 +64,15 @@ short temptable[NUMTEMPS][2] = {
 
 void Extruder::init()
 {
-    INITADC(T_SENSOR);
     INITPIN(EXTRUDER_PIN, OUTPUT, LOW);
 
     heakerTask.state = PWM_LOW;
-    heakerTask.period = 100 / TICK_PERIOD;
+    heakerTask.period = 100 / TICK_PERIOD_A;
     heakerTask.elapsedTime = 0;
     heakerTask.TickFct = &Extruder::onTickHeater;
 
     tempTask.state = PID_OFF;
-    tempTask.period = 1000 / TICK_PERIOD; // 1 second
+    tempTask.period = 1000 / TICK_PERIOD_A; // 1 second
     tempTask.elapsedTime = 0;
     tempTask.TickFct = &Extruder::onTickSensor;
 
@@ -83,6 +83,11 @@ void Extruder::init()
 void Extruder::setTemp(unsigned char temp)
 {
     desiredTemp = temp;
+
+    if (temp == 0)
+    {
+        SETPIN(EXTRUDER_PIN, LOW);
+    }
 }
 
 float Extruder::getTemp()
@@ -90,44 +95,49 @@ float Extruder::getTemp()
     return curTemp;
 }
 
+unsigned short Extruder::getDesiredTemp()
+{
+    return desiredTemp;
+}
+
 void Extruder::checkTemp()
 {
-	static unsigned char count;
+    static unsigned char count;
 
-    unsigned short xADC = GETADC();
+    unsigned short xADC = GETADC(T_SENSOR);
 
     if (xADC >= E_CUTOFF)
     {
-		if (++count > 3) // catch glitches
+        if (++count > 3) // catch glitches
         {
-			setTemp(0);
-			systemFailure("Temp Sensor");
-		}
-		return;
+            setTemp(0);
+            systemFailure("Temp Sensor");
+        }
+        return;
     }
-	count = 0;
-	unsigned char i;
-	for (i = 1; i < NUMTEMPS; ++i)
-	{
-		if (temptable[i][0] > xADC)
-		{
-			short base_temp = temptable[i][1];
-			short t_diff = temptable[i - 1][1] - base_temp;
-			short range = temptable[i][0] - temptable[i - 1][0];
-			if ((temptable[i][0] - xADC) != 0)
-			{
-				curTemp = (float)base_temp + ((float)t_diff / (float)range * (float)(temptable[i][0] - xADC));
-			}
-			else
-				curTemp = base_temp;
-			break;
-		}
-	}
-	
-	if (tempTask.state == PID_OFF)
-	{
-		prevTemp = curTemp;
-	}
+    count = 0;
+    unsigned char i;
+    for (i = 1; i < NUMTEMPS; ++i)
+    {
+        if (temptable[i][0] > xADC)
+        {
+            short base_temp = temptable[i][1];
+            short t_diff = temptable[i - 1][1] - base_temp;
+            short range = temptable[i][0] - temptable[i - 1][0];
+            if ((temptable[i][0] - xADC) != 0)
+            {
+                curTemp = (float)base_temp + ((float)t_diff / (float)range * (float)(temptable[i][0] - xADC));
+            }
+            else
+                curTemp = base_temp;
+            break;
+        }
+    }
+    
+    if (tempTask.state == PID_OFF)
+    {
+        prevTemp = curTemp;
+    }
 }
 
 void Extruder::onTickHeater(_task *task)
@@ -139,7 +149,7 @@ void Extruder::onTickHeater(_task *task)
             {
                 task->state = PWM_HIGH;
                 i = 0;
-                SETPIN(PB_3, HIGH);
+                SETPIN(EXTRUDER_PIN, HIGH);
             }
             break;
         case PWM_HIGH:
@@ -147,11 +157,11 @@ void Extruder::onTickHeater(_task *task)
             {
                 task->state = PWM_LOW;
                 i = 0;
-                SETPIN(PB_3, LOW);
+                SETPIN(EXTRUDER_PIN, LOW);
             }
             break;
         default:
-			systemFailure("PWM State");
+            systemFailure("PWM State");
             break;
     }
 
@@ -197,7 +207,7 @@ void Extruder::onTickSensor(_task *task)
                 H = MAX_HL / 3;
                 L = MAX_HL - H;
             }
-			if (prevTemp <= curTemp)
+            if (prevTemp <= curTemp)
             {
                 i = 0;
             }
@@ -221,7 +231,7 @@ void Extruder::onTickSensor(_task *task)
                     --H;
                     ++L;
                 }
-				H = 0;
+                H = 0;
                 i = 0;
             }
             if (prevTemp > curTemp && desiredTemp - 1.0 > curTemp && L > 0)
@@ -236,7 +246,7 @@ void Extruder::onTickSensor(_task *task)
             }
             break;
         case COOL:
-			H = 0;
+            H = 0;
             if (curTemp - desiredTemp <= ACCEPT_RANGE)
             {
                 task->state = STABLE;
@@ -273,9 +283,9 @@ void Extruder::onTickSensor(_task *task)
             break;
         default:
             task->state = PID_OFF;
-			systemFailure("PID State");
+            systemFailure("PID State");
             break;
     }
-	
-	prevTemp = curTemp;
+    
+    prevTemp = curTemp;
 }

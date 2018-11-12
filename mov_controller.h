@@ -7,6 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
+
 #ifndef MOV_CONTROLLER_H_
 #define MOV_CONTROLLER_H_
 
@@ -24,9 +25,12 @@ class MovController
         void onTick(_task *);
 
         static signed short getStepsPerMM(_axis);
-        static MovController *getMovController(_axis);
+        static MovController* getMovController(_axis);
 
         static void goHomeAll();
+        static void goHomeX();
+        static void goHomeY();
+        static void goHomeZ();
         static void stopAllMoves();
         static unsigned char areAnyMotorsMoving();
 
