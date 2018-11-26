@@ -9,6 +9,7 @@
  */
 
 #include "defs.h"
+#include "string.h"
 
 #define LCD_FUNC_CLR  0x01
 #define LCD_FUNC_HOME 0x02
@@ -40,20 +41,23 @@
 #define LCD_MOVE_RIGHT 0x04
 #define LCD_MOVE_LEFT  0x00
 
-static LCD display(4, 20);
+#define LCD_ROWS 4
+#define LCD_COLS 20
 
-LCD* LCD::get()
-{
-    return &display;
-}
+volatile unsigned char curRow = 0;
+volatile unsigned char curCol = 0;
 
-LCD::LCD(unsigned char rows, unsigned char cols)
-{
-    this->rows = rows;
-    this->cols = cols;
-}
+volatile char disp_func = 0;
+volatile char disp_mode = 0;
+volatile char disp_entry_mode = 0;
 
-void LCD::init()
+/// private
+void sendCommand(char);
+void sendData(char);
+void write4bits(char);
+void pulseEnable();
+
+void LCD_init()
 {
     INITPIN(LCD_ENABLE, OUTPUT, LOW);
     INITPIN(LCD_RS, OUTPUT, LOW);
@@ -62,114 +66,122 @@ void LCD::init()
     INITPIN(LCD_DATA2, OUTPUT, LOW);
     INITPIN(LCD_DATA3, OUTPUT, LOW);
 
-    this->curRow = 0;
+    disp_func = LCD_FUNC_SET | LCD_MODE_4LINE; // 4 bit interface mode, 2 lines
+    write4bits(disp_func >> 4);
 
-    this->disp_func = LCD_FUNC_SET | LCD_MODE_4LINE; // 4 bit interface mode, 2 lines
-    write4bits(this->disp_func >> 4);
+    sendCommand(disp_func);
+    sendCommand(disp_func);
 
-    sendCommand(this->disp_func);
-    sendCommand(this->disp_func);
+    disp_mode = LCD_FUNC_DIS | LCD_DISP_ON | LCD_CURS_OFF | LCD_BLNK_OFF;
+    sendCommand(disp_mode);
 
-    this->disp_mode = LCD_FUNC_DIS | LCD_DISP_ON | LCD_CURS_OFF | LCD_BLNK_OFF;
-    sendCommand(this->disp_mode);
+    LCD_clear();
 
-    clear();
+    disp_entry_mode = LCD_FUNC_MODE | LCD_ENTRY_NSHIFT | LCD_ENTRY_INCREMENT;
+    sendCommand(disp_entry_mode);
 
-    this->disp_entry_mode = LCD_FUNC_MODE | LCD_ENTRY_NSHIFT | LCD_ENTRY_INCREMENT;
-    sendCommand(this->disp_entry_mode);
-
-    home();
+    LCD_home();
 }
 
-void LCD::clear()
+void LCD_clear()
 {
     sendCommand(LCD_FUNC_CLR);
-    this->curRow = 0;
-    this->curCol = 0;
+    curRow = 0;
+    curCol = 0;
     _delay_ms(2);
 }
 
-void LCD::home()
+void LCD_home()
 {
     sendCommand(LCD_FUNC_HOME);
-    this->curRow = 0;
-    this->curCol = 0;
+    curRow = 0;
+    curCol = 0;
     _delay_ms(2);
 }
 
-void LCD::cursorOn()
+void LCD_cursorOn()
 {
-    this->disp_mode |= LCD_CURS_ON;
-    sendCommand(this->disp_mode);
+    disp_mode |= LCD_CURS_ON;
+    sendCommand(disp_mode);
 }
 
-void LCD::cursorOff()
+void LCD_cursorOff()
 {
-    this->disp_mode &= ~LCD_CURS_ON;
-    sendCommand(this->disp_mode);
+    disp_mode &= ~LCD_CURS_ON;
+    sendCommand(disp_mode);
 }
 
-void LCD::blinkOn()
+void LCD_blinkOn()
 {
-    this->disp_mode |= LCD_BLNK_ON;
-    sendCommand(this->disp_mode);
+    disp_mode |= LCD_BLNK_ON;
+    sendCommand(disp_mode);
 }
 
-void LCD::blinkOff()
+void LCD_blinkOff()
 {
-    this->disp_mode &= ~LCD_BLNK_ON;
-    sendCommand(this->disp_mode);
+    disp_mode &= ~LCD_BLNK_ON;
+    sendCommand(disp_mode);
 }
 
-void LCD::setCursor(unsigned char row, unsigned char col)
+void LCD_setCursor(unsigned char row, unsigned char col)
 {
-    this->curRow = row;
-    this->curCol = col;
+    curRow = row;
+    curCol = col;
     col += (row / 2 * 20) + ((row % 2) * 64);
     sendCommand(LCD_FUNC_DRAM | col);
 }
 
-void LCD::print(const char *msg)
+void LCD_print(const char *msg)
 {
-    for (; *msg != NULL && this->curCol < this->cols; msg++)
+    for (; *msg != 0 && curCol < LCD_COLS; msg++) //&& *msg != '\n' && *msg != '\r'
     {
         sendData(*msg);
-        this->curCol++;
+        curCol++;
     }
 }
 
-void LCD::printRight(const char *msg)
+void LCD_printAt(const char *msg, unsigned char row, unsigned char col)
 {
-    this->printAt(msg, this->curRow, this->cols - strlen(msg));
+    LCD_setCursor(row, col);
+    LCD_print(msg);
 }
 
-void LCD::printAt(const char* msg, unsigned char row, unsigned char col)
+void LCD_printRight(const char *msg)
 {
-    this->setCursor(row, col);
-    this->print(msg);
+	unsigned char l = strlen(msg);
+	if (l > LCD_COLS)
+	{
+		l = LCD_COLS;
+	}
+    LCD_printAt(msg, curRow, LCD_COLS - l);
 }
 
-void LCD::printCenter(char* msg, unsigned char row)
+void LCD_printCenter(char *msg, unsigned char row)
 {
-    this->printAt(msg, row, (this->cols - strlen(msg)) / 2);
+	unsigned char l = strlen(msg);
+	if (l > LCD_COLS)
+	{
+		l = LCD_COLS;
+	}
+    LCD_printAt(msg, row, (LCD_COLS - l) / 2);
 }
 
-void LCD::sendCommand(char cmd)
+void sendCommand(char cmd)
 {
     SETPIN(LCD_RS, LOW);
-    _delay_us(20);
+    _delay_us(40);
     write4bits(cmd >> 4);
     write4bits(cmd & 0x0F);
     SETPIN(LCD_RS, HIGH);
 }
 
-void LCD::sendData(char data)
+void sendData(char data)
 {
     write4bits(data >> 4);
     write4bits(data & 0x0F);
 }
 
-void LCD::write4bits(char data)
+void write4bits(char data)
 {
     SETPIN(LCD_DATA0, data & 0x01);
     SETPIN(LCD_DATA1, data & 0x02);
@@ -178,10 +190,10 @@ void LCD::write4bits(char data)
     pulseEnable();
 }
 
-void LCD::pulseEnable()
+void pulseEnable()
 {
     SETPIN(LCD_ENABLE, HIGH);
     _delay_us(1200);
     SETPIN(LCD_ENABLE, LOW);
-    _delay_us(120);
+    _delay_us(200);
 }

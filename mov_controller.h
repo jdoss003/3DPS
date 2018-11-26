@@ -11,6 +11,9 @@
 #ifndef MOV_CONTROLLER_H_
 #define MOV_CONTROLLER_H_
 
+#include "defs.h"
+#include "task.h"
+
 class MovController
 {
     public:
@@ -25,14 +28,14 @@ class MovController
         void onTick(_task *);
 
         static signed short getStepsPerMM(_axis);
+        static signed short getMaxPos(_axis axis);
         static MovController* getMovController(_axis);
 
         static void goHomeAll();
-        static void goHomeX();
-        static void goHomeY();
-        static void goHomeZ();
         static void stopAllMoves();
         static unsigned char areAnyMotorsMoving();
+        static void disableSteppers();
+        static void enableSteppers();
 
     private:
         _axis axis;

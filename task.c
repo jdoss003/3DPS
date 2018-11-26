@@ -1,5 +1,5 @@
 /*
- * task.cpp
+ * task.c
  * Author : Justin Doss
  *
  * This file is responsible for running each task element on each SM tick.

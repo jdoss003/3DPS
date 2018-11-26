@@ -11,6 +11,10 @@
 #ifndef PIN_IO_H_
 #define PIN_IO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum io_mode { INPUT, OUTPUT } _io_mode;
 typedef enum io_hl { LOW, HIGH } _io_hl;
 typedef enum io_pin
@@ -30,5 +34,9 @@ unsigned char GETPIN(_io_pin pin, char invert);
 
 unsigned short GETADC(_io_pin pin);
 unsigned short GETMAXADC();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PIN_IO_H_ */

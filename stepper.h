@@ -11,6 +11,8 @@
 #ifndef STEPPER_H_
 #define STEPPER_H_
 
+#include "defs.h"
+
 class Stepper
 {
     public:
@@ -25,4 +27,4 @@ class Stepper
         unsigned char reversed;
 };
 
-#endif /* STEPPER_H_ */
+#endif //STEPPER_H_

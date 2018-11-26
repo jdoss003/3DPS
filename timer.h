@@ -11,6 +11,10 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void TimerOnA();
 void TimerOffA();
 void TimerSetA(unsigned long M);
@@ -18,5 +22,9 @@ void TimerSetA(unsigned long M);
 void TimerOnB();
 void TimerOffB();
 void TimerSetB(unsigned long M);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //TIMER_H

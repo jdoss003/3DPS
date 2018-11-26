@@ -1,5 +1,5 @@
 /*
- * File: timer.cpp
+ * File: timer.c
  * Author : Justin Doss
  *
  * Methods to control timer 0/3 which can be configured for ms time periods.
@@ -7,14 +7,13 @@
  * I acknowledge all content contained herein, excluding template or example code,
  * is my own work.
  */
-
 #include "defs.h"
 
 // Internal variables for mapping AVR's ISR to our cleaner TimerISR model.
-unsigned long _avr_timer_a_M = 1;         // Start count from here, down to 0. Default 1 ms.
-unsigned long _avr_timer_a_cntcurr = 0;   // Current internal count of 1ms ticks
-unsigned long _avr_timer_b_M = 1;         // Start count from here, down to 0. Default 1 ms.
-unsigned long _avr_timer_b_cntcurr = 0;   // Current internal count of 1ms ticks
+volatile unsigned long _avr_timer_a_M = 1;         // Start count from here, down to 0. Default 1 ms.
+volatile unsigned long _avr_timer_a_cntcurr = 0;   // Current internal count of 1ms ticks
+volatile unsigned long _avr_timer_b_M = 1;         // Start count from here, down to 0. Default 1 ms.
+volatile unsigned long _avr_timer_b_cntcurr = 0;   // Current internal count of 1ms ticks
 
 void TimerOnA()
 {
@@ -105,13 +104,13 @@ void TimerSetB(unsigned long M)
 }
 
 // In our approach, the C programmer does not touch this ISR, but rather TimerISR()
-ISR(TIMER0_COMPA_vect, ISR_BLOCK)
+ISR(TIMER0_COMPA_vect)
 {
     // CPU automatically calls when TCNT0 == OCR0 (every 1 ms per TimerOn settings)
     _avr_timer_b_cntcurr--;                 // Count down to 0 rather than up to TOP
     if (_avr_timer_b_cntcurr == 0)
     {                                       // results in a more efficient compare
-		_avr_timer_b_cntcurr = _avr_timer_b_M;
+        _avr_timer_b_cntcurr = _avr_timer_b_M;
         TIMER_B_ISR();                      // Call the ISR that the user uses
     }
 }

@@ -1,5 +1,5 @@
 /*
- * pin_io.cpp
+ * pin_io.c
  * Author : Justin Doss
  *
  * This file allows for easy control of all input and output signals from the microcontroller.

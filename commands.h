@@ -11,9 +11,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#include "defs.h"
-
-class GCode;
+#include "gcode.h"
 
 void initMovScheduler();
 void proccess_command(GCode);

@@ -11,7 +11,9 @@
 /
 /-------------------------------------------------------------------------*/
 
+#ifndef F_CPU
 #define F_CPU 8000000UL
+#endif
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -21,8 +23,8 @@
 #include "spi_avr.h"
 
 /* Peripheral controls (Platform dependent) */
-#define SS_LOW()		SPI_SSLOW()  	/* Set MMC_CS = low */
-#define	SS_HIGH()		SPI_SSHIGH()	/* Set MMC_CS = high */
+#define SS_LOW()		SPI_SS_LOW()  	/* Set MMC_CS = low */
+#define	SS_HIGH()		SPI_SS_HIGH()	/* Set MMC_CS = high */
 #define MMC_CD			1	/* Test if card detected.   yes:true, no:false, default:true */
 #define MMC_WP			0	/* Test if write protected. yes:true, no:false, default:false */
 #define	FCLK_SLOW()		SPI_FCLK_SLOW()	/* Set SPI clock for initialization (100-400kHz) */

@@ -15,6 +15,8 @@
 
 #define MAX_MENU_ITEMS 25
 
+void LCDMenu_init();
+
 class LCD_MENU;
 
 class LCD_MENU_ITEM
@@ -52,12 +54,10 @@ class LCD_MENU_ITEM_ACTION : public LCD_MENU_ITEM
 class LCD_MENU_ITEM_FILE : public LCD_MENU_ITEM
 {
     public:
-        LCD_MENU_ITEM_FILE(char* path, char* name, char isDir);
-        ~LCD_MENU_ITEM_FILE();
+        LCD_MENU_ITEM_FILE(char* name, char isDir);
         void onSelect();
 
     private:
-        char* path;
         char isDir;
 };
 
@@ -70,6 +70,9 @@ class LCD_MENU
         void setParent(LCD_MENU*);
         virtual void update();
         virtual void updateButtons();
+
+        virtual void enableButtons();
+        virtual unsigned char disableButtons();
 
         virtual void next();
         virtual void prev();
@@ -88,6 +91,7 @@ class LCD_MENU
         LCD_MENU_ITEM* items[MAX_MENU_ITEMS];
         unsigned char index;
         unsigned char count;
+        unsigned char btnEnabled;
         unsigned char curBtn;
         unsigned char nameIndex;
         unsigned char nameCount;
@@ -99,21 +103,40 @@ class LCD_FILE_MENU : public LCD_MENU
         virtual void back();
 };
 
-class LCDReadFileMenu : public LCD_MENU
+class LCD_MOVE_MOTOR_MENU : public LCD_MENU
 {
     public:
-        LCDReadFileMenu();
-        ~LCDReadFileMenu();
+        LCD_MOVE_MOTOR_MENU(_axis ax, char* name);
+        ~LCD_MOVE_MOTOR_MENU();
         void update();
+        void updateButtons();
+
+        void next();
+        void prev();
+        void select();
         void back();
         void menu();
 
-        FIL* getFile();
-
     private:
-        TCHAR* line;
-        FIL file;
+        _axis ax;
+        char* name;
 };
+
+//class LCDReadFileMenu : public LCD_MENU
+//{
+//    public:
+//        LCDReadFileMenu();
+//        ~LCDReadFileMenu();
+//        void update();
+//        void back();
+//        void menu();
+//
+//        FIL* getFile();
+//
+//    private:
+//        TCHAR* line;
+//        FIL file;
+//};
 
 class LCDMainMenu : public LCD_MENU
 {
@@ -124,10 +147,16 @@ class LCDMainMenu : public LCD_MENU
 class LCDMainScreen : public LCD_MENU
 {
     public:
+        LCDMainScreen();
+        ~LCDMainScreen();
         void update();
         void menu();
         
         static void makeCurrent();
+        static void setMessage(char* m);
+
+    private:
+        char msg[21];
 };
 
 #endif //LCD_MENU_H

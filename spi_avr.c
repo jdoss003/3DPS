@@ -40,13 +40,13 @@ void SPI_Disable()
     SPCR &= ~(1 << SPE);
 }
 
-void SPI_SSLOW()
+void SPI_SS_LOW()
 {
     SPCR |= (1 << MSTR);
     PORTB &= ~(1 << PORTB4);
 }
 
-void SPI_SSHIGH()
+void SPI_SS_HIGH()
 {
     PORTB |= (1 << PORTB4);
 }

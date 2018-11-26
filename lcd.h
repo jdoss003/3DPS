@@ -11,46 +11,28 @@
 #ifndef LCD_H
 #define LCD_H
 
-class LCD
-{
-    public:
-        LCD(unsigned char rows, unsigned char cols);
-        void init();
-		
-		void clear();
-        void home();
-		void cursorOn();
-		void cursorOff();
-		void blinkOn();
-		void blinkOff();
-		
-		void setCursor(unsigned char row, unsigned char col);
-		
-		void print(const char* msg);
-		void printRight(const char* msg);
-		void printAt(const char* msg, unsigned char row, unsigned char col);
-		void printCenter(char*, unsigned char row);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-        static LCD* get();
+void LCD_init();
 
-    private:
+void LCD_clear();
+void LCD_home();
+void LCD_cursorOn();
+void LCD_cursorOff();
+void LCD_blinkOn();
+void LCD_blinkOff();
 
-		void sendCommand(char);
-        void sendData(char);
-		void write4bits(char);
-		void pulseEnable();
+void LCD_setCursor(unsigned char row, unsigned char col);
 
-        unsigned char rows;
-        unsigned char cols;
+void LCD_print(const char *msg);
+void LCD_printAt(const char *msg, unsigned char row, unsigned char col);
+void LCD_printRight(const char *msg);
+void LCD_printCenter(char *msg, unsigned char row);
 
-        unsigned char curRow;
-		unsigned char curCol;
-
-        char disp_func;
-        char disp_mode;
-        char disp_entry_mode;
-};
-
-extern unsigned char getLength(char *str);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //LCD_H

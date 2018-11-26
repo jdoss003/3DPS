@@ -13,21 +13,30 @@
 
 #define F_CPU 8000000UL
 
-#include <stdlib.h>
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
 #include <util/delay.h>
-#include "string.h"
-#include "ff.h"
 
-void waitingLoop();
+#define NSTR(s) ((char*)malloc(sizeof(char) * s))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
+typedef enum system_states { SYS_START, SYS_WAITING, SYS_RUNNING, SYS_FAILURE } _system_state;
+
+void waitingLoop(unsigned char delay);
 void updateDisplay();
-void systemFailure(char*);
-unsigned char getSysState();
+void systemFailure(char* msg);
+_system_state getSysState();
+void setSystemPrinting(unsigned char isSerial);
 
-#include "pin_io.h"
-#include "lcd.h"
-#include "task.h"
+char* EMPTY_STR();
+
+#ifdef __cplusplus
+}
+#endif
 
 // in milliseconds
 #define TICK_PERIOD_A 1
@@ -35,7 +44,15 @@ unsigned char getSysState();
 #define TIMER_A_ISR tickTasks
 #define TIMER_B_ISR updateDisplay
 
+#include "pin_io.h"
 #include "timer.h"
+#include "usart1284.h"
+#include "lcd.h"
+#include "task.h"
+#include "extruder.h"
+#include "fan.h"
+#include "ff.h"
+#include "fileio.h"
 
 #define LCD_ENABLE PD_2
 #define LCD_RS PD_3
@@ -46,29 +63,35 @@ unsigned char getSysState();
 #define LCD_BTTNS PA_1
 
 #define LCD_ENTER_LOW 430
-#define LCD_ENTER_HIGH 530
-#define LCD_BACK_LOW 50
-#define LCD_BACK_HIGH 140
-#define LCD_UP_LOW 590
-#define LCD_UP_HIGH 690
-#define LCD_DOWN_LOW 145
-#define LCD_DOWN_HIGH 225
+#define LCD_ENTER_HIGH 470
+#define LCD_BACK_LOW 60
+#define LCD_BACK_HIGH 100
+#define LCD_UP_LOW 600
+#define LCD_UP_HIGH 640
+#define LCD_DOWN_LOW 140
+#define LCD_DOWN_HIGH 180
 #define LCD_MENU_LOW 260
-#define LCD_MENU_HIGH 360
+#define LCD_MENU_HIGH 300
 
-#include "extruder.h"
+#define FAN_PIN PB_0
 
 #define T_SENSOR PA_0
-
 #define EXTRUDER_PIN PB_3
+
+#define E_CUTOFF 1000
+#define KP 4.0
+#define KI 0.097
+#define KD 24
+
+#define MOTOR_DISABLE PA_7
 
 #define X_MOTOR_DIR PC_0
 #define X_MOTOR_STEP PC_1
-#define X_MOTOR_INVERT 1
+#define X_MOTOR_INVERT 0
 
 #define Y_MOTOR_DIR PC_2
 #define Y_MOTOR_STEP PC_3
-#define Y_MOTOR_INVERT 1
+#define Y_MOTOR_INVERT 0
 
 #define Z_MOTOR_DIR PC_5
 #define Z_MOTOR_STEP PC_4
@@ -78,19 +101,14 @@ unsigned char getSysState();
 #define E_MOTOR_STEP PC_6
 #define E_MOTOR_INVERT 0
 
-#define X_ENDSTOP PA_3
-#define Y_ENDSTOP PA_2
+#define X_ENDSTOP PA_2
+#define Y_ENDSTOP PA_3
 #define Z_ENDSTOP PA_4
 
-typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
-
-#include "stepper.h"
-#include "mov_controller.h"
-
-#define X_STEPS_MM 5;
-#define Y_STEPS_MM 5;
-#define Z_STEPS_MM 10;
-#define E_STEPS_MM 20;
+#define X_STEPS_MM 200;
+#define Y_STEPS_MM 200;
+#define Z_STEPS_MM 400;
+#define E_STEPS_MM 200;
 
 #define X_HOME_OFFSET 200;
 #define Y_HOME_OFFSET 20;
@@ -100,7 +118,4 @@ typedef enum axis { X_AXIS, Y_AXIS, Z_AXIS, EXTRUDER } _axis;
 #define Y_MAX_POS 220;
 #define Z_MAX_POS 400;
 
-#include "commands.h"
-#include "gcode.h"
-
-#endif /* DEFS_H_ */
+#endif //DEFS_H_

@@ -8,12 +8,13 @@
  * is my own work.
  */
 
-#include "defs.h"
+#include "mov_controller.h"
+#include "stepper.h"
 
 enum contrl_state { MOTOR_WAITING, MOTOR_MOVING };
 
-static MovController x_motor, y_motor, z_motor, extruder;
-static MovController *motors[4] = {&x_motor, &y_motor, &z_motor, &extruder};
+MovController x_motor, y_motor, z_motor, extruder;
+MovController* motors[4] = {&x_motor, &y_motor, &z_motor, &extruder};
 
 signed short MovController::getStepsPerMM(_axis axis)
 {
@@ -50,7 +51,7 @@ signed short getHomeOffset(_axis axis)
     }
 }
 
-signed short getMaxPos(_axis axis)
+signed short MovController::getMaxPos(_axis axis)
 {
     switch (axis)
     {
@@ -152,8 +153,8 @@ void MovController::goHome()
 {
     if (this->hasEndstop)
     {
-        this->moveTo(-getMaxPos(this->axis) * getStepsPerMM(this->axis) + getHomeOffset(this->axis) + 100, 20);
-        while (this->isMoving()) { waitingLoop(); }
+        this->moveTo(-getMaxPos(this->axis) * getStepsPerMM(this->axis) + getHomeOffset(this->axis) + 100, 5);
+        while (this->isMoving()) { waitingLoop(1); }
         this->setPosition(-(float)getHomeOffset(this->axis) / (float)getStepsPerMM(this->axis));
         this->moveTo(getHomeOffset(this->axis), 20);
     }
@@ -223,21 +224,6 @@ void MovController::goHomeAll()
     getMovController(Z_AXIS)->goHome();
 }
 
-void MovController::goHomeX()
-{
-    getMovController(X_AXIS)->goHome();
-}
-
-void MovController::goHomeY()
-{
-    getMovController(Y_AXIS)->goHome();
-}
-
-void MovController::goHomeZ()
-{
-    getMovController(Z_AXIS)->goHome();
-}
-
 void MovController::stopAllMoves()
 {
     unsigned char i;
@@ -257,4 +243,14 @@ unsigned char MovController::areAnyMotorsMoving()
     }
 
     return ret;
+}
+
+void MovController::disableSteppers()
+{
+    SETPIN(MOTOR_DISABLE, HIGH);
+}
+
+void MovController::enableSteppers()
+{
+    SETPIN(MOTOR_DISABLE, LOW);
 }

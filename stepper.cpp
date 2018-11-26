@@ -8,7 +8,7 @@
  * is my own work.
  */
 
-#include "defs.h"
+#include "stepper.h"
 
 Stepper x_stepper, y_stepper, z_stepper, extruder_stepper;
 Stepper* steppers[4] = { &x_stepper, &y_stepper, &z_stepper, &extruder_stepper };
@@ -56,6 +56,10 @@ void Stepper::init(_axis axis)
 
 void Stepper::step(unsigned char reverse)
 {
+    // for DRV8825 stepper drivers
+    // min step pulse period is 2 µs
+    // min delay for dir change is 650 ns
+
     switch (this->axis)
     {
         case X_AXIS:
@@ -91,9 +95,6 @@ void Stepper::step(unsigned char reverse)
             break;
     }
 
-    // for DRV8825 stepper drivers
-    // min step pulse period is 2 µs
-    // min delay for dir change is 650 ns
     if (this->reversed == reverse)
     {
         ++this->index;
@@ -103,5 +104,4 @@ void Stepper::step(unsigned char reverse)
     {
         this->index = (this->index == 0 ? 3 : this->index - 1);
     }
-
 }

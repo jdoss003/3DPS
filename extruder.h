@@ -12,15 +12,23 @@
 #ifndef EXTRUDER_H_
 #define EXTRUDER_H_
 
-namespace Extruder
-{
-    void  init();
-    void  setTemp(unsigned char);
-    float getTemp();
-    unsigned short getDesiredTemp();
-    void checkTemp();
-    void onTickHeater(_task *);
-    void onTickSensor(_task *);
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* EXTRUDER_H_ */
+#include "defs.h"
+
+void  Extruder_init();
+void  Extruder_setTemp(unsigned char);
+void  Extruder_preHeat();
+float Extruder_getTemp();
+unsigned short Extruder_getDesiredTemp();
+void Extruder_checkTemp();
+void Extruder_onTickHeater(_task *);
+void Extruder_onTickSensor(_task *);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //EXTRUDER_H_

@@ -11,7 +11,11 @@
 #ifndef TASK_H_
 #define TASK_H_
 
-const unsigned char MAX_TASKS = 10;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MAX_TASKS 10
 
 // Given to us to use.
 // Struct for Tasks represent a running process in our simple real-time operating system.
@@ -30,4 +34,8 @@ struct task
 void addTask(_task *task);
 void tickTasks();
 
-#endif /* TASK_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif // TASK_H_
