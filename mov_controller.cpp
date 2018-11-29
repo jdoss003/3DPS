@@ -10,8 +10,12 @@
 
 #include "mov_controller.h"
 #include "stepper.h"
+#include "defs.h"
 
-enum contrl_state { MOTOR_WAITING, MOTOR_MOVING };
+#define HOME_PERIOD1 1
+#define HOME_PERIOD2 3
+
+enum contrl_state { MOTOR_WAITING, MOTOR_MOVING, MOTOR_HOME1, MOTOR_HOME2, MOTOR_HOME3, MOTOR_HOME4 };
 
 MovController x_motor, y_motor, z_motor, extruder;
 MovController* motors[4] = {&x_motor, &y_motor, &z_motor, &extruder};
@@ -34,7 +38,7 @@ signed short MovController::getStepsPerMM(_axis axis)
     }
 }
 
-signed short getHomeOffset(_axis axis)
+float getHomeOffset(_axis axis)
 {
     switch (axis)
     {
@@ -153,10 +157,12 @@ void MovController::goHome()
 {
     if (this->hasEndstop)
     {
-        this->moveTo(-getMaxPos(this->axis) * getStepsPerMM(this->axis) + getHomeOffset(this->axis) + 100, 5);
-        while (this->isMoving()) { waitingLoop(1); }
-        this->setPosition(-(float)getHomeOffset(this->axis) / (float)getStepsPerMM(this->axis));
-        this->moveTo(getHomeOffset(this->axis), 20);
+        this->task.state = MOTOR_HOME1;
+        this->task.period = HOME_PERIOD1;
+//        this->moveTo(-getMaxPos(this->axis) * getStepsPerMM(this->axis) + getHomeOffset(this->axis) + 100, 5);
+//        while (this->isMoving()) { waitingLoop(1); }
+//        this->setPosition(-(float)getHomeOffset(this->axis) / (float)getStepsPerMM(this->axis));
+//        this->moveTo(getHomeOffset(this->axis), 20);
     }
 }
 
@@ -195,6 +201,29 @@ void MovController::onTick(_task *task)
             break;
         case MOTOR_WAITING:
             break;
+        case MOTOR_HOME1:
+            if (this->hitEndstop())
+            {
+                this->task.state = MOTOR_HOME2;
+                this->steps = getStepsPerMM(this->axis) / 10;
+            }
+            break;
+        case MOTOR_HOME2:
+            if (this->steps == 0)
+            {
+                this->task.state = MOTOR_HOME3;
+                this->task.period = HOME_PERIOD2;
+            }
+            break;
+        case MOTOR_HOME3:
+            if (this->hitEndstop())
+            {
+                this->task.state = MOTOR_MOVING;
+                this->steps = getHomeOffset(this->axis) * getStepsPerMM(this->axis);
+				this->pos = -getHomeOffset(this->axis);
+                this->task.period = HOME_PERIOD1;
+            }
+			break;
         default:
             systemFailure("Motor state");
             break;
@@ -203,13 +232,30 @@ void MovController::onTick(_task *task)
     switch (this->task.state)
     {
         case MOTOR_MOVING:
-            if (this->hasEndstop && ((this->steps < 0 && this->hitEndstop()) || (this->steps > 0 && this->pos > getMaxPos(this->axis))))
-                systemFailure("Invalid pos");
+            if (this->hasEndstop)
+				if (this->steps < 0 && this->hitEndstop())
+					{
+						char* s = "    ";
+						itoa(this->steps, s, 10);
+						//systemFailure("Invalid pos1");
+						systemFailure(s);
+					}
+				else if (this->steps > 0 && this->pos > getMaxPos(this->axis))
+					systemFailure("Invalid pos2");
             Stepper::getStepper(this->axis)->step(this->steps < 0);
             this->pos += (this->steps < 0 ? -1.0 / (float) getStepsPerMM(this->axis) : 1.0 / (float) getStepsPerMM(this->axis));
             this->steps += (this->steps < 0 ? 1 : -1);
             break;
         case MOTOR_WAITING:
+            break;
+        case MOTOR_HOME1:
+        case MOTOR_HOME3:
+            Stepper::getStepper(this->axis)->step(1);
+            break;
+        case MOTOR_HOME2:
+            Stepper::getStepper(this->axis)->step(0);
+			if (!this->hitEndstop())
+				--this->steps;
             break;
         default:
             systemFailure("Motor State");

@@ -9,6 +9,8 @@
  */
 
 #include "defs.h"
+#include "string.h"
+#include "lcd_menu.h"
 
 FATFS fatfs;
 FRESULT fr;
@@ -64,6 +66,17 @@ FILINFO* FIO_readDirNext()
     return &finfo;
 }
 
+unsigned char FIO_closeFile()
+{
+	if (file.obj.fs)
+	{
+		fr = f_close(&file);
+		if (fr != FR_OK)
+		return 0;
+	}
+	return 1;
+}
+
 unsigned char FIO_openFile(char* n)
 {
     if (!FIO_closeFile())
@@ -73,26 +86,15 @@ unsigned char FIO_openFile(char* n)
     return fr == FR_OK;
 }
 
-unsigned char FIO_closeFile()
-{
-    if (file.obj.fs)
-    {
-        fr = f_close(&file);
-        if (fr != FR_OK)
-            return 0;
-    }
-    return 1;
-}
-
 char* FIO_fileGetLine()
 {
-    if (file.obj.fs)
+	memset(&line[0], 0, 100);
+	
+    if (!f_eof(&file))
     {
-        char* r = f_gets(line, 100, &file);
-        if (!r)
-            line[0] = 0;
-		return line;
+        char* r = f_gets(&line[0], 100, &file);
+        if (r != 0)
+			return r;
     }
-	line[0] = 0;
-    return line;
+    return &line[0];
 }

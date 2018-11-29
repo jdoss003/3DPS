@@ -107,11 +107,6 @@ void Extruder_setTemp(unsigned char temp)
     }
 }
 
-void  Extruder_preHeat()
-{
-    Extruder_setTemp(190);
-}
-
 float Extruder_getTemp()
 {
     return curTemp;
@@ -167,8 +162,8 @@ void Extruder_checkTemp()
     static unsigned char count;
 	
     unsigned short xADC = GETADC(T_SENSOR);
-//     xADC = GETADC(T_SENSOR);
-//     xADC = GETADC(T_SENSOR);
+    xADC = GETADC(T_SENSOR);
+    xADC = GETADC(T_SENSOR);
     //xADC /= 3;
 	
     if (xADC >= E_CUTOFF)
@@ -259,16 +254,9 @@ void Extruder_onTickSensor(_task *task)
             }
             return;
         case PREHEAT:
-
-            break;
         case STABLE:
-
-            break;
         case COOL:
-
-            break;
         case HEAT:
-
             break;
         default:
             task->state = PID_OFF;
@@ -287,7 +275,7 @@ void Extruder_onTickSensor(_task *task)
 	prevIndex = (prevIndex + 1) % NUM_PREV_ERRS;
     curI += curError * PID_I;
 
-    short newH = KP * curError + curI - (curDiff * PID_D);
+    float newH = KP * curError + curI - (curDiff * PID_D);
 
     if (newH > MAX_HL)
         newH = MAX_HL;

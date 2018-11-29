@@ -16,8 +16,7 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <util/delay.h>
-
-#define NSTR(s) ((char*)malloc(sizeof(char) * s))
+#include <avr/pgmspace.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +30,6 @@ void updateDisplay();
 void systemFailure(char* msg);
 _system_state getSysState();
 void setSystemPrinting(unsigned char isSerial);
-
-char* EMPTY_STR();
 
 #ifdef __cplusplus
 }
@@ -52,7 +49,7 @@ char* EMPTY_STR();
 #include "extruder.h"
 #include "fan.h"
 #include "ff.h"
-#include "fileio.h"
+//#include "fileio.h"
 
 #define LCD_ENABLE PD_2
 #define LCD_RS PD_3
@@ -76,10 +73,10 @@ char* EMPTY_STR();
 #define FAN_PIN PB_0
 
 #define T_SENSOR PA_0
-#define EXTRUDER_PIN PB_3
+#define EXTRUDER_PIN PA_5
 
 #define E_CUTOFF 1000
-#define KP 4.0
+#define KP 13.5
 #define KI 0.097
 #define KD 24
 
@@ -91,31 +88,31 @@ char* EMPTY_STR();
 
 #define Y_MOTOR_DIR PC_2
 #define Y_MOTOR_STEP PC_3
-#define Y_MOTOR_INVERT 0
+#define Y_MOTOR_INVERT 1
 
-#define Z_MOTOR_DIR PC_5
-#define Z_MOTOR_STEP PC_4
+#define Z_MOTOR_DIR PC_4
+#define Z_MOTOR_STEP PC_5
 #define Z_MOTOR_INVERT 0
 
-#define E_MOTOR_DIR PC_7
-#define E_MOTOR_STEP PC_6
-#define E_MOTOR_INVERT 0
+#define E_MOTOR_DIR PC_6
+#define E_MOTOR_STEP PC_7
+#define E_MOTOR_INVERT 1
 
 #define X_ENDSTOP PA_2
 #define Y_ENDSTOP PA_3
 #define Z_ENDSTOP PA_4
 
-#define X_STEPS_MM 200;
-#define Y_STEPS_MM 200;
-#define Z_STEPS_MM 400;
-#define E_STEPS_MM 200;
+#define X_STEPS_MM 100
+#define Y_STEPS_MM 100
+#define Z_STEPS_MM 200
+#define E_STEPS_MM 50
 
-#define X_HOME_OFFSET 200;
-#define Y_HOME_OFFSET 20;
-#define Z_HOME_OFFSET -50;
+#define X_HOME_OFFSET 36
+#define Y_HOME_OFFSET 7
+#define Z_HOME_OFFSET 2
 
-#define X_MAX_POS 220;
-#define Y_MAX_POS 220;
-#define Z_MAX_POS 400;
+#define X_MAX_POS 220
+#define Y_MAX_POS 220
+#define Z_MAX_POS 240
 
 #endif //DEFS_H_

@@ -63,28 +63,28 @@ void Stepper::step(unsigned char reverse)
     switch (this->axis)
     {
         case X_AXIS:
-            SETPIN(X_MOTOR_DIR, reverse);
+            SETPIN(X_MOTOR_DIR, this->reversed != reverse);
             _delay_us(1);
             SETPIN(X_MOTOR_STEP, HIGH);
             _delay_us(2);
             SETPIN(X_MOTOR_STEP, LOW);
             break;
         case Y_AXIS:
-            SETPIN(Y_MOTOR_DIR, reverse);
+            SETPIN(Y_MOTOR_DIR, this->reversed != reverse);
             _delay_us(1);
             SETPIN(Y_MOTOR_STEP, HIGH);
             _delay_us(2);
             SETPIN(Y_MOTOR_STEP, LOW);
             break;
         case Z_AXIS:
-            SETPIN(Z_MOTOR_DIR, reverse);
+            SETPIN(Z_MOTOR_DIR, this->reversed != reverse);
             _delay_us(1);
             SETPIN(Z_MOTOR_STEP, HIGH);
             _delay_us(2);
             SETPIN(Z_MOTOR_STEP, LOW);
             break;
         case EXTRUDER:
-            SETPIN(E_MOTOR_DIR, reverse);
+            SETPIN(E_MOTOR_DIR, this->reversed != reverse);
             _delay_us(1);
             SETPIN(E_MOTOR_STEP, HIGH);
             _delay_us(2);

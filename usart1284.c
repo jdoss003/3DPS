@@ -55,7 +55,7 @@ unsigned char USART_hasTransmitted(unsigned char usartNum)
     return !usartNum ? bit_is_set(UCSR0A, TXC0) : bit_is_set(UCSR1A, TXC1);
 }
 
-unsigned char USART_hasTransmittedLine(unsigned char usartNum)
+inline unsigned char USART_hasTransmittedLine(unsigned char usartNum)
 {
 	return !usartNum ? !bit_is_set(UCSR0B, UDRIE0) : !bit_is_set(UCSR1B, UDRIE1);
 }
@@ -96,18 +96,19 @@ void USART_autoRecieve(unsigned char b, unsigned char usartNum)
 {
     if (!usartNum)
     {
-		for (unsigned char i = 0; i < MAX_BUFS; ++i)
-		{
-			index0[i] = 0;
-			memset(&readBuf0[i][0], 0, MAX_BUF);
-		}
+		if (b)
+			for (unsigned char i = 0; i < MAX_BUFS; ++i)
+			{
+				index0[i] = 0;
+				memset(&readBuf0[i][0], 0, MAX_BUF);
+			}
 		UCSR0B = b ? UCSR0B | (1 << RXCIE0) : UCSR0B & ~(1 << RXCIE0);
 	}
     else
         UCSR1B = b ? UCSR1B | (1 << RXCIE1) : UCSR1B & ~(1 << RXCIE1);
 }
 
-unsigned char USART_hasLine(unsigned char usartNum)
+inline unsigned char USART_hasLine(unsigned char usartNum)
 {
 // 	char i = !usartNum ? head0 : head1;
 // 	char* c = !usartNum ? &readBuf0[0] : &readBuf1[0];
@@ -192,7 +193,7 @@ void USART_clearBuf(unsigned char usartNum)
     }
 }
 
-void USART_sendLine(char* l, unsigned char usartNum)
+inline void USART_sendLine(char* l, unsigned char usartNum)
 {
 	//char c;
     if (!usartNum)

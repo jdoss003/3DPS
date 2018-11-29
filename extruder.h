@@ -20,7 +20,10 @@ extern "C" {
 
 void  Extruder_init();
 void  Extruder_setTemp(unsigned char);
-void  Extruder_preHeat();
+inline void  Extruder_preHeat()
+{
+	Extruder_setTemp(190);
+}
 float Extruder_getTemp();
 unsigned short Extruder_getDesiredTemp();
 void Extruder_checkTemp();

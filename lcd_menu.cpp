@@ -11,6 +11,7 @@
 #include "lcd_menu.h"
 #include "mov_controller.h"
 #include "string.h"
+#include "fileio.h"
 
 #define WITHIN(val, low, high) (val >= low && val <= high)
 
@@ -24,6 +25,7 @@ LCD_MENU actionMenu;
 LCD_MOVE_MOTOR_MENU xMotorMenu(X_AXIS, "Move X");
 LCD_MOVE_MOTOR_MENU yMotorMenu(Y_AXIS, "Move Y");
 LCD_MOVE_MOTOR_MENU zMotorMenu(Z_AXIS, "Move Z");
+LCD_MOVE_MOTOR_MENU eMotorMenu(EXTRUDER, "Move Extruder");
 
 LCD_MENU_ITEM_MENU itemActionMenu("Actions", &actionMenu);
 LCD_MENU_ITEM_ACTION itemListRootDir("Print file", &listRootDir);
@@ -31,13 +33,24 @@ LCD_MENU_ITEM_ACTION itemListRootDir("Print file", &listRootDir);
 LCD_MENU_ITEM_MENU itemXMotorMenu("Move X", &xMotorMenu);
 LCD_MENU_ITEM_MENU itemYMotorMenu("Move Y", &yMotorMenu);
 LCD_MENU_ITEM_MENU itemZMotorMenu("Move Z", &zMotorMenu);
+LCD_MENU_ITEM_MENU itemEMotorMenu("Move E", &eMotorMenu);
 
 LCD_MENU_ITEM_ACTION itemHomeAll("Home All", &MovController::goHomeAll);
 LCD_MENU_ITEM_ACTION itemDisableSteppers("Disable Steppers", &MovController::disableSteppers);
 LCD_MENU_ITEM_ACTION itemEnableSteppers("Enable Steppers", &MovController::enableSteppers);
 LCD_MENU_ITEM_ACTION itemPreHeat("Preheat", &Extruder_preHeat);
 
+void exitFileMenu();
+
+LCD_MENU_ITEM_ACTION itemExitFileMenu("<---", &exitFileMenu);
+
 volatile unsigned char driveMounted = 0;
+
+void exitFileMenu()
+{
+	currentScreen->reset();
+	currentScreen = currentScreen->getParent();
+}
 
 unsigned char strEndsWith(char* toTest, char* toMatch)
 {
@@ -47,17 +60,7 @@ unsigned char strEndsWith(char* toTest, char* toMatch)
     if (len1 < len2)
         return 0;
 
-    toTest += len1 - len2 - 1;
-    while (--len2 > 0)
-	{
-		if (*toTest != *toMatch)
-		{
-			return 0;
-		}
-		++toTest;
-		++toMatch;
-	}
-    return 1;
+    return strncmp(toTest + len1 - len2, toMatch, len2) == 0;
 }
 
 void listFiles(char* path)
@@ -67,7 +70,10 @@ void listFiles(char* path)
         FILINFO* finfo;
         LCD_MENU* fmenu = new LCD_FILE_MENU();
 
-        fmenu->addMenuItem(new LCD_MENU_ITEM_FILE("..", 1));
+		if (*path != '/')
+			fmenu->addMenuItem(new LCD_MENU_ITEM_FILE("..", 1));
+		else
+			fmenu->addMenuItem(&itemExitFileMenu);
 
         unsigned char count = 0;
         while ((finfo = FIO_readDirNext()))
@@ -75,7 +81,7 @@ void listFiles(char* path)
             if (!(finfo->fattrib & AM_HID) && count++ < MAX_MENU_ITEMS)
             {
                 char isDir = finfo->fattrib & AM_DIR;
-                //if (isDir)// || strEndsWith(&finfo->fname[0], ".gcode"))
+                if (isDir || strEndsWith(&finfo->fname[0], ".gcode"))
                     fmenu->addMenuItem(new LCD_MENU_ITEM_FILE(strdup(&finfo->fname[0]), isDir));
             }
         }
@@ -104,9 +110,11 @@ void LCDMenu_init()
     xMotorMenu.setParent(&actionMenu);
     yMotorMenu.setParent(&actionMenu);
     zMotorMenu.setParent(&actionMenu);
+	eMotorMenu.setParent(&actionMenu);
     actionMenu.addMenuItem(&itemXMotorMenu);
     actionMenu.addMenuItem(&itemYMotorMenu);
     actionMenu.addMenuItem(&itemZMotorMenu);
+	actionMenu.addMenuItem(&itemEMotorMenu);
     actionMenu.setParent(&mainMenu);
 
     mainMenu.addMenuItem(&itemActionMenu);
@@ -188,7 +196,11 @@ void LCD_MENU_ITEM_FILE::onSelect()
 		{
 			setSystemPrinting(0);
 		}
-        //todo error msg
+        else
+		{
+			LCDMainScreen::makeCurrent();
+			LCDMainScreen::setMessage("Failed to open!");
+		}
     }
 }
 
@@ -282,12 +294,7 @@ void LCD_MENU::updateButtons()
     if (!this->btnEnabled)
         return;
 
-	//cli();
     unsigned short xADC = GETADC(LCD_BTTNS);
-// 	xADC += GETADC(LCD_BTTNS);
-// 	xADC += GETADC(LCD_BTTNS);
-// 	xADC /= 3;
-	//sei();
 	
     if (WITHIN(xADC, LCD_DOWN_LOW, LCD_DOWN_HIGH))
     {
@@ -457,15 +464,15 @@ void LCD_MOVE_MOTOR_MENU::prev() {}
 void LCD_MOVE_MOTOR_MENU::select()
 {
     MovController* mc = MovController::getMovController(ax);
-    if (mc->getPosition() < (float)MovController::getMaxPos(this->ax) - 0.1)
-        mc->moveTo(MovController::getStepsPerMM(this->ax) * 0.1, 5);
+    if (ax == EXTRUDER || mc->getPosition() < (float)MovController::getMaxPos(this->ax) - 1.0)
+        mc->moveTo(MovController::getStepsPerMM(this->ax) * 1.0, 1);
 }
 
 void LCD_MOVE_MOTOR_MENU::back()
 {
     MovController* mc = MovController::getMovController(ax);
-    if (mc->getPosition() > 0.1)
-        mc->moveTo(MovController::getStepsPerMM(this->ax) * -0.1, 5);
+    if (mc->getPosition() > 1.0)
+        mc->moveTo(MovController::getStepsPerMM(this->ax) * -1.0, 1);
 }
 
 void LCD_MOVE_MOTOR_MENU::menu()
@@ -548,14 +555,11 @@ void LCDMainScreen::update()
     LCD_print("C\xDF");
     LCD_printRight("00.0/00C\xDF");
 
-	unsigned short xADC = GETADC(LCD_BTTNS);
-// 	xADC += GETADC(LCD_BTTNS);
-// 	xADC += GETADC(LCD_BTTNS);
-// 	xADC /= 3;
+	//unsigned short xADC = GETADC(LCD_BTTNS);
 	
-	char temp2[6];
-	utoa(xADC, &temp2[0], 10);
-	LCD_printCenter(&temp2[0], 2);
+// 	char temp2[6];
+// 	utoa(xADC, &temp2[0], 10);
+// 	LCD_printCenter(&temp2[0], 2);
 
 	if (this->msg)
 	{

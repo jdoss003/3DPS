@@ -14,9 +14,14 @@
 #include "commands.h"
 #include "lcd_menu.h"
 #include "mov_controller.h"
+#include "fileio.h"
 
 _system_state system_state;
-volatile char serialSorce = 0;
+char serialSorce = 0;
+volatile unsigned char doDisplayUpdate = 0;
+
+GCode command;
+char* nextLine;
 
 void* operator new(size_t objsize)
 {
@@ -28,37 +33,27 @@ void operator delete(void* obj)
     free(obj);
 }
 
-char* EMPTY_STR()
-{
-	char* r = (char*)malloc(sizeof(char));
-	*r = 0;
-	return r;
-}
-
 void waitingLoop(unsigned char delay)
 {
     switch (system_state)
     {
         case SYS_WAITING:
-//            Extruder_checkTemp();
-            LCD_MENU::getCurrent()->updateButtons();
-            break;
         case SYS_RUNNING:
-//            Extruder_checkTemp();
+			if (doDisplayUpdate)
+			{
+				LCD_MENU::getCurrent()->update();
+				doDisplayUpdate = 0;
+			}
             break;
         default:
             systemFailure("Bad system state");
             break;
     }
-    //if (delay)
-		_delay_ms(1);
 }
 
 void updateDisplay()
 {
-	//LCD_MENU::getCurrent()->updateButtons();
-	//_delay_us(10);
-    LCD_MENU::getCurrent()->update();
+    doDisplayUpdate = 1;
 }
 
 _system_state getSysState()
@@ -100,6 +95,8 @@ void systemFailure(char* msg)
 
 void mainLoop()
 {
+	static unsigned char t = 0;
+	
     switch (system_state)
     {
         case SYS_START:
@@ -111,11 +108,11 @@ void mainLoop()
         {
             if (USART_hasLine(0))
             {
-				char* serLine = USART_getLine(0);
-                GCode command;
-                if (command.parseAscii(serLine, 1))
+				 nextLine = USART_getLine(0);
+                
+                if (command.parseAscii(nextLine, 1))
                 {
-					LCDMainScreen::setMessage(serLine);
+					LCDMainScreen::setMessage(nextLine);
 					//USART_clearBuf(0);
                     proccess_command(command);
                     if (command.hasN())
@@ -129,21 +126,19 @@ void mainLoop()
 				}
                 return;
             }
-            waitingLoop(0);
+            //waitingLoop(0);
             break;
         }
         case SYS_RUNNING:
         {
-            GCode command;
             if (serialSorce)
             {
                 if (USART_hasLine(0))
                 {
-					char* serLine = USART_getLine(0);
-					if (command.parseAscii(serLine, 1))
+					nextLine = USART_getLine(0);
+					if (command.parseAscii(nextLine, 1))
 					{
-						LCDMainScreen::setMessage(serLine);
-						//USART_clearBuf(0);
+						LCDMainScreen::setMessage(nextLine);
 						proccess_command(command);
 					}
 					else
@@ -156,25 +151,37 @@ void mainLoop()
 						while (!USART_hasTransmittedLine(0));
 					}
                 }
-                return;
+                //return;
             }
             else
             {
-                char* l = FIO_fileGetLine();
+                nextLine = FIO_fileGetLine();
                 
-                if (command.parseAscii(l, 0))
+                if (*nextLine && command.parseAscii(nextLine, 0))
                 {
-					LCDMainScreen::setMessage(l);
+					LCDMainScreen::setMessage(nextLine);
 					proccess_command(command);
 				}
             }
-            waitingLoop(0);
+            //waitingLoop(0);
             break;
         }
         default:
             systemFailure("Bad system state");
             break;
     }
+
+    if (doDisplayUpdate)
+    {
+	    LCD_MENU::getCurrent()->update();
+		doDisplayUpdate = 0;
+    }
+	
+	if (++t > 200)
+	{
+		LCD_MENU::getCurrent()->updateButtons();
+		t = 0;
+	}
 }
 
 int main()
@@ -212,7 +219,8 @@ int main()
 	USART_clearBuf(0);
     USART_autoRecieve(1, 0);
 	
-	MovController::getMovController(X_AXIS)->setPosition(50.0);
+	MovController::getMovController(Z_AXIS)->setPosition(50.0);
+	MovController::getMovController(EXTRUDER)->setPosition(50.0);
 
     while (1) { mainLoop(); }
 }

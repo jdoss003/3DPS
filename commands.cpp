@@ -46,6 +46,10 @@ void scheduleMove(_task *task)
             MovController::getMovController(EXTRUDER)->moveTo(mov.e_steps, mov.e_peroid);
         task->state = SCHED_DONE;
     }
+	else if (task->state == SCHED_READY)
+	{
+		LCDMainScreen::setMessage("Sched Ready");
+	}
 }
 
 void initMovScheduler()
@@ -100,7 +104,7 @@ void do_g_command(GCode cmd)
 
             if (mov.e_steps >= mov.x_steps && mov.e_steps >= mov.y_steps && mov.e_steps >= mov.z_steps)
             {
-                mov.e_peroid = 5;
+                mov.e_peroid = 1;
                 if (mov.x_steps != 0)
                     mov.x_peroid = mov.e_peroid * abs(mov.e_steps / mov.x_steps);
                 if (mov.y_steps != 0)
@@ -110,7 +114,7 @@ void do_g_command(GCode cmd)
             }
             else if (mov.x_steps >= mov.y_steps && mov.x_steps > mov.z_steps)
             {
-                mov.x_peroid = 5;
+                mov.x_peroid = 1;
                 if (mov.e_steps != 0)
                     mov.e_peroid = mov.x_peroid * abs(mov.x_steps / mov.e_steps);
                 if (mov.y_steps != 0)
@@ -120,7 +124,7 @@ void do_g_command(GCode cmd)
             }
             else if (mov.y_steps >= mov.z_steps)
             {
-                mov.y_peroid = 5;
+                mov.y_peroid = 1;
                 if (mov.x_steps != 0)
                     mov.x_peroid = mov.y_peroid * abs(mov.y_steps / mov.x_steps);
                 if (mov.e_steps != 0)
@@ -130,7 +134,7 @@ void do_g_command(GCode cmd)
             }
             else
             {
-                mov.z_peroid = 5;
+                mov.z_peroid = 1;
                 if (mov.x_steps != 0)
                     mov.x_peroid = mov.z_peroid * abs(mov.z_steps / mov.x_steps);
                 if (mov.y_steps != 0)
@@ -144,7 +148,7 @@ void do_g_command(GCode cmd)
 
         case 28: // go home command
             while (MovController::areAnyMotorsMoving()) { waitingLoop(1); }
-            if (cmd.hasNoXYZ())
+            if (!cmd.hasX() && !cmd.hasY() && !cmd.hasZ())
                 MovController::goHomeAll();
             if (cmd.hasX())
                 MovController::getMovController(X_AXIS)->goHome();
@@ -180,7 +184,6 @@ void do_g_command(GCode cmd)
 	{
 		USART_sendLine("ok\n", 0);
 		while (!USART_hasTransmittedLine(0));
-		//LCDMainScreen::setMessage("ok\n");
 	}
 }
 
@@ -201,12 +204,21 @@ void do_m_command(GCode cmd)
 		{
 			if (cmd.fromSerial())
 			{
-				char* rsp = "ok T:000.00 ";
-				dtostrf(Extruder_getTemp(), 6, 2, rsp + 5);
-				*(rsp + 11) = '\n';
-				USART_sendLine(rsp, 0);
+				USART_sendLine("ok T:", 0);
+				char rsp[4];
+				dtostrf(Extruder_getTemp(), 3, 0, &rsp[0]);
+				unsigned char i = 0;
+				while (rsp[i] == ' ')
+					++i;
 				while (!USART_hasTransmittedLine(0));
-				//LCDMainScreen::setMessage(rsp);
+				USART_sendLine(&rsp[i], 0);
+				char* des = "/    ";
+				utoa(Extruder_getDesiredTemp(), des + 1, 10);
+				while (!USART_hasTransmittedLine(0));
+				USART_sendLine(des, 0);
+				while (!USART_hasTransmittedLine(0));
+				USART_sendLine("\n", 0);
+				
 				return;
 			}
 			break;
@@ -235,7 +247,7 @@ void do_m_command(GCode cmd)
 		{
 			if (cmd.fromSerial())
 			{
-				char* rsp = "ok;FIRMWARE_NAME:3DPS_AVR;\n";
+				char* rsp = "ok FIRMWARE_NAME:avr3DPS MACHINE_TYPE:Anet EXTRUDER_COUNT:1 \n";
 				USART_sendLine(rsp, 0);
 				while (!USART_hasTransmittedLine(0));
 				LCDMainScreen::setMessage(rsp);
@@ -259,7 +271,6 @@ void do_m_command(GCode cmd)
 	{
 		USART_sendLine("ok\n", 0);
 		while (!USART_hasTransmittedLine(0));
-		//LCDMainScreen::setMessage("ok\n");
 	}
 }
 
@@ -267,7 +278,6 @@ void proccess_command(GCode cmd)
 {
     if (cmd.hasFormatError())
         return;//invalidCommandFailure();
-//    Extruder_checkTemp();
 
     if (cmd.hasG())
         do_g_command(cmd);

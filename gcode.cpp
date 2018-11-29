@@ -84,7 +84,7 @@ bool GCode::parseAscii(char *line, bool fromSerial)
 			{
 				N = parseLongValue(pos);
 				params |= 0x400;
-				if (curLineNum + 1 == N)
+				if (curLineNum + 1 == N || curLineNum == N)
 				    curLineNum = N;
                 else
                     setFormatError();
