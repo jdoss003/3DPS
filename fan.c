@@ -26,7 +26,7 @@ void Fan_init()
     fanTask.state = PWM_LOW;
     fanTask.period = 100 / TICK_PERIOD_A;
     fanTask.elapsedTime = 0;
-    fanTask.TickFct = &Extruder_onTickHeater;
+    fanTask.TickFct = &Fan_onTickPWM;
 
     addTask(&fanTask);
 }

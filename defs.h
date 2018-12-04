@@ -16,7 +16,6 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <util/delay.h>
-#include <avr/pgmspace.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +48,7 @@ void setSystemPrinting(unsigned char isSerial);
 #include "extruder.h"
 #include "fan.h"
 #include "ff.h"
-//#include "fileio.h"
+#include "fileio.h"
 
 #define LCD_ENABLE PD_2
 #define LCD_RS PD_3
@@ -104,12 +103,12 @@ void setSystemPrinting(unsigned char isSerial);
 
 #define X_STEPS_MM 100
 #define Y_STEPS_MM 100
-#define Z_STEPS_MM 200
-#define E_STEPS_MM 50
+#define Z_STEPS_MM 400
+#define E_STEPS_MM 95
 
 #define X_HOME_OFFSET 36
 #define Y_HOME_OFFSET 7
-#define Z_HOME_OFFSET 2
+#define Z_HOME_OFFSET 0.8f
 
 #define X_MAX_POS 220
 #define Y_MAX_POS 220

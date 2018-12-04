@@ -12,7 +12,8 @@
 #include "commands.h"
 #include "mov_controller.h"
 #include "lcd_menu.h"
-#include "string.h"
+#include <string.h>
+#include <math.h>
 
 _task mov_scheduler;
 
@@ -106,41 +107,41 @@ void do_g_command(GCode cmd)
             {
                 mov.e_peroid = 1;
                 if (mov.x_steps != 0)
-                    mov.x_peroid = mov.e_peroid * abs(mov.e_steps / mov.x_steps);
+                    mov.x_peroid = (unsigned short)floorf((mov.e_peroid * fabs(mov.e_steps / (float)mov.x_steps)) + 0.5f);
                 if (mov.y_steps != 0)
-                    mov.y_peroid = mov.e_peroid * abs(mov.e_steps / mov.y_steps);
+                    mov.y_peroid = (unsigned short)floorf((mov.e_peroid * fabs(mov.e_steps / (float)mov.y_steps)) + 0.5f);
                 if (mov.z_steps != 0)
-                    mov.z_peroid = mov.e_peroid * abs(mov.e_steps / mov.z_steps);
+                    mov.z_peroid = (unsigned short)floorf((mov.e_peroid * fabs(mov.e_steps / (float)mov.z_steps)) + 0.5f);
             }
             else if (mov.x_steps >= mov.y_steps && mov.x_steps > mov.z_steps)
             {
                 mov.x_peroid = 1;
                 if (mov.e_steps != 0)
-                    mov.e_peroid = mov.x_peroid * abs(mov.x_steps / mov.e_steps);
+                    mov.e_peroid = (unsigned short)floorf((mov.x_peroid * fabs(mov.x_steps / (float)mov.e_steps)) + 0.5f);
                 if (mov.y_steps != 0)
-                    mov.y_peroid = mov.x_peroid * abs(mov.x_steps / mov.y_steps);
+                    mov.y_peroid = (unsigned short)floorf((mov.x_peroid * fabs(mov.x_steps / (float)mov.y_steps)) + 0.5f);
                 if (mov.z_steps != 0)
-                    mov.z_peroid = mov.x_peroid * abs(mov.x_steps / mov.z_steps);
+                    mov.z_peroid = (unsigned short)floorf((mov.x_peroid * fabs(mov.x_steps / (float)mov.z_steps)) + 0.5f);
             }
             else if (mov.y_steps >= mov.z_steps)
             {
                 mov.y_peroid = 1;
                 if (mov.x_steps != 0)
-                    mov.x_peroid = mov.y_peroid * abs(mov.y_steps / mov.x_steps);
+                    mov.x_peroid = (unsigned short)floorf((mov.y_peroid * fabs(mov.y_steps / (float)mov.x_steps)) + 0.5f);
                 if (mov.e_steps != 0)
-                    mov.e_peroid = mov.y_peroid * abs(mov.y_steps / mov.e_steps);
+                    mov.e_peroid = (unsigned short)floorf((mov.y_peroid * fabs(mov.y_steps / (float)mov.e_steps)) + 0.5f);
                 if (mov.z_steps != 0)
-                    mov.z_peroid = mov.y_peroid * abs(mov.y_steps / mov.z_steps);
+                    mov.z_peroid = (unsigned short)floorf((mov.y_peroid * fabs(mov.y_steps / (float)mov.z_steps)) + 0.5f);
             }
             else
             {
                 mov.z_peroid = 1;
                 if (mov.x_steps != 0)
-                    mov.x_peroid = mov.z_peroid * abs(mov.z_steps / mov.x_steps);
+                    mov.x_peroid = (unsigned short)floorf((mov.z_peroid * fabs(mov.z_steps / (float)mov.x_steps)) + 0.5f);
                 if (mov.y_steps != 0)
-                    mov.y_peroid = mov.z_peroid * abs(mov.z_steps / mov.y_steps);
+                    mov.y_peroid = (unsigned short)floorf((mov.z_peroid * fabs(mov.z_steps / (float)mov.y_steps)) + 0.5f);
                 if (mov.e_steps != 0)
-                    mov.e_peroid = mov.z_peroid * abs(mov.z_steps / mov.e_steps);
+                    mov.e_peroid = (unsigned short)floorf((mov.z_peroid * fabs(mov.z_steps / (float)mov.e_steps)) + 0.5f);
             }
 
             mov_scheduler.state = SCHED_READY;

@@ -9,11 +9,6 @@ extern "C" {
 
 void USART_init(unsigned char usartNum);
 void USART_initBaud(unsigned char usartNum, unsigned short baudRate);
-unsigned char USART_isSendReady(unsigned char usartNum);
-unsigned char USART_hasTransmitted(unsigned char usartNum);
-unsigned char USART_hasReceived(unsigned char usartNum);
-void USART_send(unsigned char toSend, unsigned char usartNum);
-unsigned char USART_receive(unsigned char usartNum);
 
 void USART_autoRecieve(unsigned char b, unsigned char usartNum);
 unsigned char USART_hasLine(unsigned char usartNum);

@@ -12,7 +12,7 @@
 #define FILEIO_H
 
 #ifdef __cplusplus
-//extern "C" {
+extern "C" {
 #endif
 
 #include "defs.h"
@@ -27,7 +27,7 @@ unsigned char FIO_closeFile();
 char* FIO_fileGetLine();
 
 #ifdef __cplusplus
-//}
+}
 #endif
 
 

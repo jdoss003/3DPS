@@ -10,7 +10,6 @@
 
 #include "defs.h"
 #include "string.h"
-#include "lcd_menu.h"
 
 FATFS fatfs;
 FRESULT fr;

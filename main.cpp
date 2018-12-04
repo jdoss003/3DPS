@@ -14,7 +14,6 @@
 #include "commands.h"
 #include "lcd_menu.h"
 #include "mov_controller.h"
-#include "fileio.h"
 
 _system_state system_state;
 char serialSorce = 0;

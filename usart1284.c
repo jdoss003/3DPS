@@ -45,51 +45,9 @@ void USART_init(unsigned char usartNum)
 	USART_initBaud(usartNum, BAUD_RATE);
 }
 
-unsigned char USART_isSendReady(unsigned char usartNum)
-{
-    return !usartNum ? (UCSR0A & (1 << UDRE0))  && !bit_is_set(UCSR0B, TXCIE0) : (UCSR1A & (1 << UDRE1)) && !bit_is_set(UCSR1B, TXCIE1);
-}
-
-unsigned char USART_hasTransmitted(unsigned char usartNum)
-{
-    return !usartNum ? bit_is_set(UCSR0A, TXC0) : bit_is_set(UCSR1A, TXC1);
-}
-
 inline unsigned char USART_hasTransmittedLine(unsigned char usartNum)
 {
 	return !usartNum ? !bit_is_set(UCSR0B, UDRIE0) : !bit_is_set(UCSR1B, UDRIE1);
-}
-
-/// **** WARNING: THIS FUNCTION BLOCKS MULTI-TASKING; USE WITH CAUTION!!! **** ///
-unsigned char USART_hasReceived(unsigned char usartNum)
-{
-    return !usartNum? bit_is_set(UCSR0A, RXC0) : bit_is_set(UCSR1A, RXC1);
-}
-
-/// **** WARNING: THIS FUNCTION BLOCKS MULTI-TASKING; USE WITH CAUTION!!! **** ///
-void USART_send(unsigned char toSend, unsigned char usartNum)
-{
-    if (!usartNum) {
-        loop_until_bit_is_set(UCSR0A, UDRE0);
-        UDR0 = toSend;
-    }
-    else {
-        loop_until_bit_is_set(UCSR1A, UDRE1);
-        UDR1 = toSend;
-    }
-}
-
-/// **** WARNING: THIS FUNCTION BLOCKS MULTI-TASKING; USE WITH CAUTION!!! **** ///
-unsigned char USART_receive(unsigned char usartNum)
-{
-    if (!usartNum) {
-        loop_until_bit_is_set(UCSR0A, RXC0);     // Wait for data to be received
-        return UDR0;                             // Get and return received data from buffer
-    }
-    else {
-        loop_until_bit_is_set(UCSR1A, RXC1);
-        return UDR1;
-    }
 }
 
 void USART_autoRecieve(unsigned char b, unsigned char usartNum)
@@ -106,113 +64,52 @@ void USART_autoRecieve(unsigned char b, unsigned char usartNum)
 	}
     else
         UCSR1B = b ? UCSR1B | (1 << RXCIE1) : UCSR1B & ~(1 << RXCIE1);
+        // TODO USART 1
 }
 
 inline unsigned char USART_hasLine(unsigned char usartNum)
 {
-// 	char i = !usartNum ? head0 : head1;
-// 	char* c = !usartNum ? &readBuf0[0] : &readBuf1[0];
-// 	char t = !usartNum ? index0 : index1;
-// 	
-// 	while (i != t)
-// 	{
-// 		if (*(c + i) == '\n')
-// 			return 1;
-// 		if (++i == MAX_BUF)
-// 			i = 0;
-// 	}
-// 	
-//     return 0;
-
 	if (!usartNum)
 	{
 		return index0[curBufRead0] > 0 && readBuf0[curBufRead0][index0[curBufRead0] - 1] == '\n';
 	}
 	return 0;
-	//return !usartNum ? index0 > 0 && readBuf0[index0 - 1] == '\n' : index1 > 0 && readBuf1[index1 - 1] == '\n';
 }
 
 char* USART_getLine(unsigned char usartNum)
 {
-// 	char i = !usartNum ? head0 : head1;
-// 	char* c = !usartNum ? &readBuf0[0] : &readBuf1[0];
-// 	char t = !usartNum ? index0 : index1;
-// 	char s = 0;
-// 	
-// 	while (i != t)
-// 	{
-// 		++s;
-// 		if (*(c + i) == '\n')
-// 			break;
-// 		if (++i == MAX_BUF)
-// 			i = 0;
-// 	}
-// 	
-// 	if (i == t)
-// 		return NULL;
-// 	
-// 	i = !usartNum ? head0 : head1;
-// 	char* l = malloc(sizeof(char) * (s + 1));
-// 	memset(l, 0, sizeof(char) * (s + 1));
-// 	
-// 	while (s-- > 0)
-// 	{
-// 		*(l++) = *(c + i);
-// 		if (++i == MAX_BUF)
-// 			i = 0;
-// 	}
-// 	
-// 	if (!usartNum)
-// 	{
-// 		head0 = i;
-// 	}
-// 	else
-// 	{
-// 		head1 = i;
-// 	}
-// 	
-// 	return l;
-	char* temp = &readBuf0[curBufRead0][0];
+    // TODO USART 1
+    char* temp = &readBuf0[curBufRead0][0];
 	index0[curBufRead0] = 0;
 	curBufRead0 = (curBufRead0 + 1) % MAX_BUFS;
 	return temp;
-	//return !curBuf ? &readBuf0[0] : &readBuf1[0];
 }
 
 void USART_clearBuf(unsigned char usartNum)
 {
     if (!usartNum)
     {
-//         memset(&readBuf0[0], 0, MAX_BUF);
-//         index0 = 0;
+        // TODO USART 0
     }
     else
     {
-//         memset(&readBuf1[0], 0, MAX_BUF);
-//         index1 = 0;
+        // TODO USART 1
     }
 }
 
 inline void USART_sendLine(char* l, unsigned char usartNum)
 {
-	//char c;
     if (!usartNum)
     {
-//		while ((c = *(l++)))
-//			USART_send(c, usartNum);
-//		USART_send(c, usartNum);
         out0 = l;
-		//outHead0 = l;
         UCSR0B |= (1  << UDRIE0);
     }
     else
     {
+        // TODO USART 1
         //out1 = l;
-		//outHead1 = l;
         //UCSR1B |= (1  << UDRIE1);
     }
-// 	USART_autoRecieve(0, usartNum);
-// 	USART_send(*l, usartNum);
 }
 
 ISR(USART0_UDRE_vect)
@@ -220,12 +117,10 @@ ISR(USART0_UDRE_vect)
     UDR0 = *out0;
     ++out0;
     if (*out0 == 0)
-	{
-		UCSR0B = UCSR0B & ~(1 << UDRIE0);
-		//free(outHead0);
-	}
+        UCSR0B = UCSR0B & ~(1 << UDRIE0);
 }
 
+// TODO USART 1
 // ISR(USART1_UDRE_vect)
 // {
 //     UDR1 = *out1;
@@ -257,23 +152,9 @@ ISR(USART0_RX_vect)
 			index0[curBufWrite0] = 0;
 		}
 	}
-// 	if (index0 > 0 && readBuf0[index0 - 1] == '\n')
-//         trash = UDR0;
-// 	if (index0 >= MAX_BUF)
-//     {
-// 	    USART_clearBuf(0);
-//         readBuf0[index0++] = UDR0;
-//     }
-//     else
-//         readBuf0[index0++] = UDR0;
-		
-// 	if (index0 == MAX_BUF)
-// 	{
-// 		USART_clearBuf(0);
-// 		index0 = 0;
-// 	}
 }
 
+// TODO USART 1
 // ISR(USART1_RX_vect)
 // {
 //     if (index1 > 0 && readBuf1[index1 - 1] == '\n')

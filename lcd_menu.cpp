@@ -11,7 +11,6 @@
 #include "lcd_menu.h"
 #include "mov_controller.h"
 #include "string.h"
-#include "fileio.h"
 
 #define WITHIN(val, low, high) (val >= low && val <= high)
 
@@ -98,6 +97,11 @@ void listRootDir()
         driveMounted = 1;
         listFiles("/..");
     }
+	else
+	{
+		LCDMainScreen::makeCurrent();
+		LCDMainScreen::setMessage("Failed to mount!");
+	}
 }
 
 void LCDMenu_init()
